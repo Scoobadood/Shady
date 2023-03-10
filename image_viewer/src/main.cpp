@@ -36,7 +36,7 @@ void initGl() {
   }
 }
 
-GLuint generate_texture(GLubyte * image_data, GLint texture_width, GLint texture_height) {
+GLuint generate_texture(GLubyte *image_data, GLint texture_width, GLint texture_height) {
   GLuint texture_id;
   glGenTextures(1, &texture_id);
   glActiveTexture(GL_TEXTURE0);
@@ -55,6 +55,28 @@ GLuint generate_texture(GLubyte * image_data, GLint texture_width, GLint texture
   return texture_id;
 }
 
+void init_buffers(GLuint &vao_id, GLuint &vbo_verts, GLuint &vbo_indices) {
+  glm::vec2 vertices[4] = {{0.0, 0.0},
+                           {1.0, 0.0},
+                           {1.0, 1.0},
+                           {0.0, 1.0}
+  };
+  GLushort indices[] = {0, 1, 2, 0, 2, 3};
+
+  glGenVertexArrays(1, &vao_id);
+  glGenBuffers(1, &vbo_verts);
+  glGenBuffers(1, &vbo_indices);
+  glBindVertexArray(vao_id);
+
+  glBindBuffer(GL_ARRAY_BUFFER, vbo_verts);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices[0], GL_STATIC_DRAW);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_indices);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], GL_STATIC_DRAW);
+}
+
 int main() {
   initGl();
 
@@ -71,29 +93,10 @@ int main() {
                                texture_height);
 
   auto texture_id = generate_texture(image_data, texture_width, texture_height);
-
   glfwSetWindowAspectRatio(window, texture_width, texture_height);
 
-  glm::vec2 vertices[4] = {{0.0, 0.0},
-                           {1.0, 0.0},
-                           {1.0, 1.0},
-                           {0.0, 1.0}
-  };
-  GLushort indices[] = {0, 1, 2, 0, 2, 3};
   GLuint vao_id, vbo_verts, vbo_indices;
-
-  glGenVertexArrays(1, &vao_id);
-  glGenBuffers(1, &vbo_verts);
-  glGenBuffers(1, &vbo_indices);
-  glBindVertexArray(vao_id);
-
-  glBindBuffer(GL_ARRAY_BUFFER, vbo_verts);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices[0], GL_STATIC_DRAW);
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_indices);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], GL_STATIC_DRAW);
+  init_buffers(vao_id, vbo_verts, vbo_indices);
 
   shader->use();
   shader->set1i("textureMap", 0);
@@ -101,8 +104,8 @@ int main() {
   int width, height;
   while (!glfwWindowShouldClose(window)) {
     /* Handle retina display */
-    glfwGetFramebufferSize (window, &width, &height);
-    glViewport (0, 0, width, height) ;
+    glfwGetFramebufferSize(window, &width, &height);
+    glViewport(0, 0, width, height);
 
     glClear(GL_COLOR_BUFFER_BIT);
     glBindTexture(GL_TEXTURE_2D, GL_TEXTURE0);
