@@ -6,9 +6,15 @@
 #include "fragment.h"
 #include "shader.h"
 #include "image_io.h"
-#include "GLFW/glfw3.h"
+
+#include <GLFW/glfw3.h>
 
 #include <spdlog/spdlog-inl.h>
+
+struct State {
+  float divider;
+  bool dragging;
+};
 
 GLFWwindow *create_window(const std::string &title, int32_t width, int32_t height) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -77,15 +83,42 @@ void init_buffers(GLuint &vao_id, GLuint &vbo_verts, GLuint &vbo_indices) {
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], GL_STATIC_DRAW);
 }
 
+/*
+ * Update the
+ */
+void cursor_callback(GLFWwindow *window, double x, double y) {
+  auto *config = (State *) glfwGetWindowUserPointer(window);
+  if (!config->dragging) return;
+  int width, height;
+  glfwGetWindowSize(window, &width, &height);
+  config->divider = x / width;
+}
+
+void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
+  auto *config = (State *) glfwGetWindowUserPointer(window);
+  if (button == GLFW_MOUSE_BUTTON_LEFT) {
+    if (action == GLFW_PRESS) {
+      config->dragging = true;
+    } else if (action == GLFW_RELEASE) {
+      config->dragging = false;
+    }
+  }
+}
+
 int main() {
   initGl();
 
+  State state{0.5f, false};
+
   auto window = create_window("Image Viewer", 453, 340);
+  glfwSetWindowUserPointer(window, &state);
+
+  glfwSetCursorPosCallback(window, cursor_callback);
+  glfwSetMouseButtonCallback(window, mouse_button_callback);
 
   auto shader = std::unique_ptr<Shader>(new Shader(vertex_shader_source,
                                                    (const GLchar **) nullptr,
-                                                   fragment_shader_source));
-
+                                                   brightness_frag_shader_source));
 
   GLint texture_width, texture_height;
   auto image_data = load_image("/Users/dave/CLionProjects/image_toys/data/parrot.png",
@@ -106,6 +139,9 @@ int main() {
     /* Handle retina display */
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
+
+    shader->use();
+    shader->set1f("divider", state.divider);
 
     glClear(GL_COLOR_BUFFER_BIT);
     glBindTexture(GL_TEXTURE_2D, GL_TEXTURE0);
