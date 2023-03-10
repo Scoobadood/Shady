@@ -7,24 +7,19 @@ FetchContent_Declare(
         GIT_TAG        3.3-stable
 )
 FetchContent_MakeAvailable(glfw)
-find_package(glfw3 3.2 REQUIRED)
+add_definitions(-DGL_SILENCE_DEPRECATION)
 
-# OpenGL
-IF (APPLE)
-    INCLUDE_DIRECTORIES(/System/Library/Frameworks)
-    INCLUDE_DIRECTORIES(${GLM_INCLUDE_DIR})
-    FIND_LIBRARY(COCOA_LIBRARY Cocoa)
-    FIND_LIBRARY(GLUT_LIBRARY GLUT)
-    FIND_LIBRARY(OpenGL_LIBRARY OpenGL)
-    MARK_AS_ADVANCED(COCOA_LIBRARY
-            GLUT_LIBRARY
-            OpenGL_LIBRARY)
-    SET(EXTRA_LIBS ${COCOA_LIBRARY} ${GLUT_LIBRARY} ${OpenGL_LIBRARY})
-ENDIF (APPLE)
+# stb_image
+FetchContent_Declare(
+        stb_image
+        GIT_REPOSITORY https://github.com/nothings/stb.git
+)
+FetchContent_MakeAvailable(stb_image)
 
 add_executable(image_viewer
-        src/gl_utils.cpp include/gl_utils.h
         src/main.cpp
+        include/vertex.h include/fragment.h
+        src/image_io.cpp include/image_io.h
         )
 
 
@@ -32,6 +27,7 @@ target_include_directories(
         image_viewer
         PRIVATE
         include
+        ${stb_image_SOURCE_DIR}
         ${glfw3_SOURCE_DIR}/include
 )
 
@@ -40,5 +36,4 @@ target_link_libraries(
         PUBLIC
         Common
         glfw
-        ${EXTRA_LIBS}
 )
