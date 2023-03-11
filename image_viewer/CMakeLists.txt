@@ -20,6 +20,7 @@ add_executable(image_viewer
         src/main.cpp
         include/vertex.h include/fragment.h
         src/image_io.cpp include/image_io.h
+        src/glfw_support.cpp include/glfw_support.h
         )
 
 
