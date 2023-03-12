@@ -17,19 +17,5 @@ load_image(const std::string &file_name, int &width, int &height) {
     spdlog::error("Cannot load image: {}", file_name);
     exit(EXIT_FAILURE);
   }
-
-
-  /* Flip vertically */
-  for (int src_row = 0; src_row * 2 < height; ++src_row) {
-    int src_idx = src_row * width * channels;
-    int dst_idx = (height - 1 - src_row) * width * channels;
-    for (int byte_idx = width * channels; byte_idx > 0; --byte_idx) {
-      GLubyte temp = pData[src_idx];
-      pData[src_idx] = pData[dst_idx];
-      pData[dst_idx] = temp;
-      ++src_idx;
-      ++dst_idx;
-    }
-  }
   return pData;
 }

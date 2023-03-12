@@ -28,14 +28,14 @@ const GLchar *brightness_frag_shader_source[] = {R"(
 
 layout (location=0) out vec4 vFragColor;
 
-smooth in vec2 vUV;
+smooth in vec2 uv_tex_coord;
 
 uniform float divider;
 uniform sampler2D textureMap;
 
 void main() {
-  float scale = vUV.x < divider ? 1.0 : 1.5;
-  vFragColor = texture(textureMap, vUV) * scale;
+  float scale = uv_tex_coord.x < divider ? 1.0 : 1.5;
+  vFragColor = texture(textureMap, uv_tex_coord) * scale;
 }
 
 )"};

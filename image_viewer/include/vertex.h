@@ -8,14 +8,19 @@
 const GLchar *vertex_shader_source[] = {R"(
 
 #version 410 core
+// -0.5 - 0.5
+layout(location=0) in vec2 vtx_coord;
 
-layout(location=0) in vec2 vVertex;
+// 0 - 1
+layout(location=1) in vec2 vtx_tex_coord;
 
-smooth out vec2 vUV;
+
+// UV coords
+smooth out vec2 uv_tex_coord;
 
 void main() {
-  gl_Position = vec4(vVertex*2.0-1,0,1);
-  vUV = vVertex;
+  gl_Position = vec4(vtx_coord,0,1);
+  uv_tex_coord = vtx_tex_coord;
 }
 
 )"};

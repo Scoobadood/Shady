@@ -33,11 +33,14 @@ GLFWwindow *create_window(const std::string &title, int32_t width, int32_t heigh
   return window;
 }
 
+/**
+ *
+ */
 void init_buffers(GLuint &vao_id, GLuint &vbo_verts, GLuint &vbo_indices) {
-  glm::vec2 vertices[4] = {{0.0, 0.0},
-                           {1.0, 0.0},
-                           {1.0, 1.0},
-                           {0.0, 1.0}
+  float vertex_data[4 * 4] = {-1.0, -1.0, 0, 0,
+                              1.0, -1.0, 1, 0,
+                              1.0, 1.0, 1, 1,
+                              -1.0, 1.0, 0, 1
   };
   GLushort indices[] = {0, 1, 2, 0, 2, 3};
 
@@ -47,12 +50,15 @@ void init_buffers(GLuint &vao_id, GLuint &vbo_verts, GLuint &vbo_indices) {
   glBindVertexArray(vao_id);
 
   glBindBuffer(GL_ARRAY_BUFFER, vbo_verts);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices[0], GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_data), &vertex_data[0], GL_STATIC_DRAW);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4*sizeof (float), 0);
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4*sizeof (float), (void*)(2*sizeof(float)));
+  glEnableVertexAttribArray(1);
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_indices);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], GL_STATIC_DRAW);
+  gl_check_error_and_halt("init_buffers()");
 }
 
 GLuint generate_texture(GLubyte *image_data, GLint texture_width, GLint texture_height) {
@@ -74,7 +80,7 @@ GLuint generate_texture(GLubyte *image_data, GLint texture_width, GLint texture_
   return texture_id;
 }
 
-void tidy_up(GLuint vbo_verts, GLuint vbo_indices, GLuint vao_id, GLuint texture_id, GLFWwindow * window) {
+void tidy_up(GLuint vbo_verts, GLuint vbo_indices, GLuint vao_id, GLuint texture_id, GLFWwindow *window) {
   glDeleteBuffers(1, &vbo_verts);
   glDeleteBuffers(1, &vbo_indices);
   glDeleteVertexArrays(1, &vao_id);
