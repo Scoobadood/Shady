@@ -31,11 +31,15 @@ layout (location=0) out vec4 vFragColor;
 smooth in vec2 uv_tex_coord;
 
 uniform float divider;
+
+
+uniform float brightness;
 uniform sampler2D textureMap;
 
 void main() {
-  float scale = uv_tex_coord.x < divider ? 1.0 : 1.5;
-  vFragColor = texture(textureMap, uv_tex_coord) * scale;
+  float scale = uv_tex_coord.x < divider ? 1.0 : (1.0 + brightness);
+  vec3 rgb = clamp(texture(textureMap, uv_tex_coord).rgb * scale, 0., 1.);
+  vFragColor = vec4(rgb,1.);
 }
 
 )"};

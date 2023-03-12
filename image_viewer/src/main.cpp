@@ -23,6 +23,7 @@ struct State {
   float texture_width;
   float texture_height;
   float divider;
+  float brightness;
   bool dragging;
 };
 
@@ -86,7 +87,9 @@ int main() {
               nullptr,
               (float) texture_width,
               (float) texture_height,
-              0.5f, false};
+              0.5f,
+              0.0f,
+              false};
 
 
   state.shader = std::unique_ptr<Shader>(new Shader(vertex_shader_source,
@@ -141,7 +144,8 @@ void render_parrot_to_texture(State & state){
   glClearColor(.6,.4,.2,1.);
   glClear(GL_COLOR_BUFFER_BIT);
   state.shader->use();
-  state.shader->set1f("divider", state.divider);
+  state.shader->set1f("divider", state.divider/100.0f);
+  state.shader->set1f("brightness", state.brightness / 100.0f);
   state.shader->set1i("textureMap", 0);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
   gl_check_error_and_halt("draw elements");
@@ -170,6 +174,11 @@ void main_loop(GLFWwindow * window, State &state) {
   render_parrot_to_texture(state);
   ImGui::Begin("Parrot", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar);
   ImGui::Image((void *) state.texture_id, ImVec2(state.texture_width, state.texture_height));
+  ImGui::End();
+
+  ImGui::Begin("Control");
+  ImGui::SliderFloat("Divider",&state.divider,0.0,100.0,"%0.0f%%");
+  ImGui::SliderFloat("Brightness",&state.brightness,-100,100,"%.0f%%");
   ImGui::End();
 
   ImGui::Begin("Bright Parrot", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar);
