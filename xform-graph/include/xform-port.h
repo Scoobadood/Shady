@@ -1,7 +1,9 @@
 /*
- * Transforms have input and output ports.
- * These are described by descriptors which determine their
- * names, whether they are required and other characteristics.
+ * Each Transform may have zero or more input and output ports.
+ * The input ports are where the inputs to the transform are obtained
+ * The output ports are wher e it publishes its results.
+ * Ports are described by descriptors which determine the port name (unique to a transform)
+ * the data type expected and (for InputPorts) whether the input is required.
  */
 #ifndef IMAGE_TOYS_XFORM_PORT_H
 #define IMAGE_TOYS_XFORM_PORT_H
@@ -26,7 +28,7 @@ class InputPortDescriptor {
 public:
   explicit InputPortDescriptor(std::string name,
                                std::string data_type,
-                               bool is_required = false);
+                               bool is_required = true);
 
   bool is_required() const;
 

@@ -4,9 +4,11 @@
 #include <utility>
 #include <spdlog/spdlog-inl.h>
 
-Xform::Xform(std::string name) //
-        : name_{std::move(name)} //
-{}
+Xform::Xform(std::string name, XformConfig config) //
+ : name_{std::move(name)} //
+{
+  config_ = std::move(config);
+}
 
 std::shared_ptr<const InputPortDescriptor>
 Xform::input_port_descriptor_for_port(const std::string &port_name) const {
@@ -43,7 +45,6 @@ Xform::add_output_port_descriptor(const std::string &name, const std::string &ty
 std::vector<std::shared_ptr<const InputPortDescriptor>>
 Xform::input_port_descriptors() const {
   using namespace std;
-  auto a = *input_port_descriptors_.begin();
   vector<shared_ptr<const InputPortDescriptor>> values;
   for( const auto & e : input_port_descriptors_) {
     values.emplace_back(e.second);

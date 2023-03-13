@@ -16,6 +16,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include "xform-config.h"
 
 class Xform {
 public:
@@ -28,6 +29,10 @@ public:
   std::map<std::string, void *>
   apply(const std::map<std::string, void *> &inputs);
 
+  /**
+   * Get a mutable reference to the config.
+   */
+   XformConfig& config() {return config_;}
 
   /**
    * @return The unique name for this transform.
@@ -69,8 +74,10 @@ public:
   output_port_descriptor_for_port(const std::string &port_name) const;
 
 protected:
-  explicit Xform(std::string name);
-  void add_input_port_descriptor(const std::string& name, const std::string& type, bool is_required = false);
+  explicit Xform(std::string name, XformConfig config= XformConfig{});
+  virtual ~Xform() = default;
+
+  void add_input_port_descriptor(const std::string& name, const std::string& type, bool is_required = true);
   void add_output_port_descriptor(const std::string& name, const std::string& type );
   std::map<std::string, std::shared_ptr<const InputPortDescriptor>> input_port_descriptors_;
   std::map<std::string, std::shared_ptr<const OutputPortDescriptor>> output_port_descriptors_;
@@ -83,6 +90,8 @@ private:
   do_apply(const std::map<std::string, void *> &inputs) = 0;
 
   std::string name_;
+
+  XformConfig config_;
 };
 
 

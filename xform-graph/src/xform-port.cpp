@@ -28,7 +28,7 @@ InputPortDescriptor::data_type() const {
 
 bool
 InputPortDescriptor::is_compatible(const OutputPortDescriptor &other_port) const {
-  return true;
+  return other_port.data_type() == data_type_;
 }
 
 OutputPortDescriptor::OutputPortDescriptor(std::string name, std::string data_type) //

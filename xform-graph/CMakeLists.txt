@@ -5,7 +5,7 @@ add_library(Xform SHARED
         src/load-file-xform.cpp include/load-file-xform.h
         src/split-channel-xform.cpp include/split-channel-xform.h
         src/save-file-xform.cpp include/save-file-xform.h
-        include/xform-config.h
+        src/xform-config.cpp include/xform-config.h
         )
 
 target_include_directories(Xform
@@ -14,12 +14,27 @@ target_include_directories(Xform
         )
 
 # Integration Test
-add_executable(graph_test
+add_executable(xform_int_test
         tests/graph-integration-test.cpp
         )
 
-target_link_libraries(graph_test
+target_link_libraries(xform_int_test
         PRIVATE
         Xform
         )
 
+
+# Unit tests
+add_executable(xform_unit_tests
+        tests/test_main.cpp
+        tests/test_ports.cpp tests/test_ports.h
+        tests/test_base_xform.cpp tests/test_base_xform.h
+        tests/test_config.cpp
+        )
+
+target_link_libraries(xform_unit_tests
+        PRIVATE
+        Xform
+        gtest
+        gmock
+        )

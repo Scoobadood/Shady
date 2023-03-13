@@ -7,6 +7,8 @@ class LoadFileXform : public Xform {
 public:
   LoadFileXform();
 
+  ~LoadFileXform() override;
+
 protected:
   static uint32_t next_idx_;
 

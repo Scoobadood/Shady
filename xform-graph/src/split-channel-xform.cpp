@@ -5,7 +5,7 @@
 uint32_t SplitChannelXform::next_idx_ = 0;
 
 SplitChannelXform::SplitChannelXform() //
-        : Xform("SplitChannel_" + std::to_string(next_idx_++)) //
+        : Xform("SplitChannel_" + std::to_string(next_idx_++),XformConfig()) //
 {
   add_input_port_descriptor("image", "image");
   add_output_port_descriptor("red", "image");

@@ -7,6 +7,8 @@ class SaveFileXform : public Xform {
 public:
   SaveFileXform();
 
+  ~SaveFileXform() override;
+
 protected:
   static uint32_t next_idx_;
 
