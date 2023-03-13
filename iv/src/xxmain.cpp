@@ -16,6 +16,7 @@ GLFWwindow *initgl(){
 
   // Create window with graphics context
   auto window = glfwCreateWindow(100, 100, "", nullptr, nullptr);
+  glfwMakeContextCurrent(window);
   return window;
 }
 

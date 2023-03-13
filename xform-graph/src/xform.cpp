@@ -102,8 +102,15 @@ Xform::validate(const std::shared_ptr<const InputPortDescriptor> &ipd,
 
 
 void
-Xform::allocate_textures(uint32_t n, GLuint * texture_ids){
-  glGenTextures(4, texture_ids);
+Xform::allocate_textures(int32_t n, GLuint * texture_ids){
+  glGenTextures(n, texture_ids);
+  for( auto i=0; i<n; ++i) {
+    if( texture_ids[i] == 0) {
+      spdlog::error( "Xfrom allocate_textures() got invalid texture ID");
+      return;
+    }
+  }
+
   glActiveTexture(GL_TEXTURE0);
   for(auto i=0; i<n; ++i) {
     glBindTexture(GL_TEXTURE_2D, texture_ids[i]);
@@ -114,7 +121,7 @@ Xform::allocate_textures(uint32_t n, GLuint * texture_ids){
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                  10, 10, 0,
-                 GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+                 GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
   }
   gl_check_error_and_halt("generate_texture");
 }

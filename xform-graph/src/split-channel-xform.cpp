@@ -23,7 +23,7 @@ void main() {
 const GLchar *f_shader_source[] = {R"(
 #version 410 core
 
-layout (location=0) out vec4 vFragColor[4];
+layout (location=0) out vec4 fragColor[4];
 
 smooth in vec2 uv_tex_coord;
 uniform sampler2D input_image;
@@ -70,7 +70,7 @@ SplitChannelXform::~SplitChannelXform() {
 std::map<std::string, std::shared_ptr<void>>
 SplitChannelXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,
                             uint32_t &err, std::string &err_msg) {
-  // Image should be texture ID with dimensions
+  /* Extract inputs */
   auto it = inputs.find("image");
   if (it == inputs.end()) {
     err = XFORM_MISSING_INPUT;
@@ -79,7 +79,6 @@ SplitChannelXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &
   }
 
   auto img = std::static_pointer_cast<TextureMetadata>(it->second);
-
   if (!img) {
     err = XFORM_INPUT_NOT_SET;
     err_msg = fmt::format("'image' is null");
@@ -111,6 +110,8 @@ SplitChannelXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &
             std::make_shared<TextureMetadata>(
                     texture_ids_[i], img->width, img->height));
   }
+  err = XFORM_OK;
+  err_msg="ok";
   return {
           {"red",   out[0]},
           {"green", out[1]},
@@ -146,9 +147,9 @@ void init_buffers(GLuint &vao_id, GLuint &vbo_verts, GLuint &vbo_indices) {
 
 void
 SplitChannelXform::init_gl_resources() {
-  allocate_textures(4, texture_ids_);
   glGenFramebuffers(1, &fbo_);
   glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
+  allocate_textures(4, texture_ids_);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                          GL_TEXTURE_2D, texture_ids_[0], 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
@@ -157,16 +158,18 @@ SplitChannelXform::init_gl_resources() {
                          GL_TEXTURE_2D, texture_ids_[2], 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3,
                          GL_TEXTURE_2D, texture_ids_[3], 0);
+
   GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
   glDrawBuffers(4, drawBuffers);
-  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    throw std::runtime_error("FB not complete");
+  auto err = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  if (err != GL_FRAMEBUFFER_COMPLETE) {
+    throw std::runtime_error(fmt::format("FB not complete : {}", err));
+  }
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   init_buffers(vao_id_, vbo_verts_, vbo_indices_);
-
   split_prog_ = std::unique_ptr<Shader>(new Shader(v_shader_source,
                                                    (const GLchar **) nullptr,
                                                    f_shader_source));
-
   gl_check_error_and_halt("init_gl_resources()");
 }

@@ -46,6 +46,8 @@ LoadFileXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &inpu
   // load file to texture
   spdlog::info("Loaded file from {} into txid {}", file_name, image_tx_);
 
+  err = XFORM_OK;
+  err_msg="ok";
   return {
           {"image", static_pointer_cast<void>(make_shared<TextureMetadata>(image_tx_, width, height))}
   };

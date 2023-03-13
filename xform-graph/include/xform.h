@@ -86,7 +86,7 @@ protected:
   explicit Xform(std::string name, XformConfig config= XformConfig{});
   virtual ~Xform() = default;
 
-  static void allocate_textures(uint32_t n, GLuint * texture_ids);
+  static void allocate_textures(int32_t n, GLuint * texture_ids);
   static void resize_textures( uint32_t n, GLuint * texture_ids, GLsizei width, GLsizei height);
 
   void add_input_port_descriptor(const std::string& name, const std::string& type, bool is_required = true);

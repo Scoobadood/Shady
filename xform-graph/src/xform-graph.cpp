@@ -142,7 +142,7 @@ bool XformGraph::evaluate() const {
     }
   }
 
-  // Evaluate until we're done or cannot continue.  
+  // Evaluate until we're done or cannot continue.
   set<string> resolved_xforms;
   map<pair<string, string>, shared_ptr<void>> results;
   while (!to_satisfy.empty()) {
