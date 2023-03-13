@@ -7,7 +7,6 @@ FetchContent_Declare(
         GIT_TAG        3.3-stable
 )
 FetchContent_MakeAvailable(glfw)
-add_definitions(-DGL_SILENCE_DEPRECATION)
 
 # Img UI
 FetchContent_Declare(
@@ -16,14 +15,6 @@ FetchContent_Declare(
         GIT_TAG
 )
 FetchContent_MakeAvailable(imgui)
-
-# stb_image
-FetchContent_Declare(
-        stb_image
-        GIT_REPOSITORY https://github.com/nothings/stb.git
-)
-FetchContent_MakeAvailable(stb_image)
-
 
 # ImGui sources
 SET(IMGUI_SOURCES ${imgui_SOURCE_DIR}/imgui.cpp ${imgui_SOURCE_DIR}/imgui_demo.cpp ${imgui_SOURCE_DIR}/imgui_draw.cpp

@@ -1,3 +1,12 @@
+# stb_image
+FetchContent_Declare(
+        stb_image
+        GIT_REPOSITORY https://github.com/nothings/stb.git
+)
+FetchContent_MakeAvailable(stb_image)
+
+add_definitions(-DGL_SILENCE_DEPRECATION)
+
 add_library(Xform SHARED
         src/xform-graph.cpp include/xform-graph.h
         src/xform.cpp include/xform.h
@@ -6,11 +15,19 @@ add_library(Xform SHARED
         src/split-channel-xform.cpp include/split-channel-xform.h
         src/save-file-xform.cpp include/save-file-xform.h
         src/xform-config.cpp include/xform-config.h
+
+        src/image_io.cpp include/image_io.h
         )
 
 target_include_directories(Xform
         PUBLIC
         include
+        ${stb_image_SOURCE_DIR}
+        )
+
+target_link_libraries(Xform
+        PUBLIC
+        Common
         )
 
 # Integration Test

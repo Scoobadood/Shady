@@ -20,14 +20,15 @@ public:
       FLOAT,
       INT,
     } type;
-    bool operator==(const PropertyDescriptor& other) const {
+
+    bool operator==(const PropertyDescriptor &other) const {
       return other.type == type && other.name == name;
     }
   };
 
-  explicit XformConfig(const std::vector<const PropertyDescriptor> & descriptors = {});
+  explicit XformConfig(const std::vector<const PropertyDescriptor> &descriptors = {});
 
-  std::vector<const PropertyDescriptor> descriptors() const ;
+  std::vector<const PropertyDescriptor> descriptors() const;
 
   void set(const std::string &name, const std::string &value);
 
@@ -46,6 +47,7 @@ private:
   protected:
     explicit XProperty(std::string name) //
             : name_(std::move(name)) {}
+
   private:
     std::string name_;
   };
@@ -57,13 +59,15 @@ private:
             : XProperty{name} //
             , value_{std::move(data)}//
     {}
+
     T value() const { return value_; }
+
   private:
     T value_;
   };
 
   std::map<std::string, const PropertyDescriptor> descriptors_;
-  std::map<std::string, std::shared_ptr<XProperty>> values_;
+  std::map<std::string, std::shared_ptr<XProperty> > values_;
 };
 
 #endif //IMAGE_TOYS_XFORM_CONFIG_H
