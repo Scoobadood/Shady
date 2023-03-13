@@ -29,3 +29,4 @@ include_directories(${spdlog_SOURCE_DIR}/include)
 
 add_subdirectory(common)
 add_subdirectory(image_viewer)
+add_subdirectory(xform-graph)
