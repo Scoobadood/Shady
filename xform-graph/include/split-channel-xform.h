@@ -19,17 +19,34 @@
 #define IMAGE_TOYS_SPLIT_CHANNEL_XFORM_H
 
 #include "xform.h"
+#include <OpenGL/gl3.h>
+#include "gl_utils.h"
+#include "shader.h"
 
 class SplitChannelXform : public Xform {
 public:
   SplitChannelXform();
 
+  ~SplitChannelXform() override;
+
 protected:
   static uint32_t next_idx_;
 
 private:
-  std::map<std::string, void *>
-  do_apply(const std::map<std::string, void *> &inputs) override;
+  std::map<std::string, std::shared_ptr<void>>
+  do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,
+           uint32_t &err, std::string &err_msg) override;
+
+  void init_gl_resources();
+
+  GLuint texture_ids_[4]; // R G B A
+
+  GLuint fbo_;
+  GLuint vao_id_;
+  GLuint vbo_verts_;
+  GLuint vbo_indices_;
+
+  std::shared_ptr<Shader> split_prog_;
 };
 
 #endif //IMAGE_TOYS_SPLIT_CHANNEL_XFORM_H

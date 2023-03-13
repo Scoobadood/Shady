@@ -16,8 +16,8 @@ SaveFileXform::SaveFileXform() //
   add_input_port_descriptor("image", "image", true);
 }
 
-std::map<std::string, void *>
-SaveFileXform::do_apply(const std::map<std::string, void *> &inputs) {
+std::map<std::string, std::shared_ptr<void>>
+SaveFileXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs, uint32_t &err, std::string &err_msg) {
   std::string file_name;
   if (!config().get("file_name", file_name)) {
     spdlog::error("No file name specified for {}", name());

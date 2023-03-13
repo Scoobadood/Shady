@@ -1,4 +1,5 @@
 #include "xform.h"
+#include "gl_utils.h"
 
 #include <string>
 #include <utility>
@@ -79,19 +80,18 @@ const std::string &Xform::name() {
  * @param inputs A map from input port names to inputs.
  * @return a map from output port names to outputs.
  */
-std::map<std::string, void *>
-Xform::apply(const std::map<std::string, void *> &inputs) {
+std::map<std::string, std::shared_ptr<void>>
+Xform::apply(const std::map<std::string, std::shared_ptr<void>> &inputs, uint32_t &err, std::string &err_msg) {
   /* Will throw if an input is invalid */
   for (const auto &ipd: input_port_descriptors_) {
     validate(ipd.second, inputs);
   }
-
-  return do_apply(inputs);
+  return do_apply(inputs, err, err_msg);
 }
 
 void
 Xform::validate(const std::shared_ptr<const InputPortDescriptor> &ipd,
-                const std::map<std::string, void *> &inputs) {
+                const std::map<std::string, std::shared_ptr<void>> &inputs) {
   auto iter = inputs.find(ipd->name());
   if (ipd->is_required() && iter == inputs.end()) {
     auto err = fmt::format("Missing input: {} in transform {}", ipd->name(), name_);
@@ -100,3 +100,33 @@ Xform::validate(const std::shared_ptr<const InputPortDescriptor> &ipd,
   }
 }
 
+
+void
+Xform::allocate_textures(uint32_t n, GLuint * texture_ids){
+  glGenTextures(4, texture_ids);
+  glActiveTexture(GL_TEXTURE0);
+  for(auto i=0; i<n; ++i) {
+    glBindTexture(GL_TEXTURE_2D, texture_ids[i]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+                 10, 10, 0,
+                 GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+  }
+  gl_check_error_and_halt("generate_texture");
+}
+
+void
+Xform::resize_textures( uint32_t n, GLuint * texture_ids, GLsizei width, GLsizei height){
+  glActiveTexture(GL_TEXTURE0);
+  for(auto i=0; i<n; ++i) {
+    glBindTexture(GL_TEXTURE_2D, texture_ids[i]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+                 width, height, 0,
+                 GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+  }
+  gl_check_error_and_halt("generate_texture");
+}

@@ -142,9 +142,9 @@ bool XformGraph::evaluate() const {
     }
   }
 
-  // Evaluate until we're done or cannot continue.
+  // Evaluate until we're done or cannot continue.  
   set<string> resolved_xforms;
-  map<pair<string, string>, void *> results;
+  map<pair<string, string>, shared_ptr<void>> results;
   while (!to_satisfy.empty()) {
     const auto &curr_xform = to_satisfy.back();
 
@@ -172,17 +172,24 @@ bool XformGraph::evaluate() const {
     if (has_unresolved) continue;
 
     // All deps are resolved. Resolve this xform.
-    map<string, void *> inputs;
+    map<string, shared_ptr<void>> inputs;
     for (const auto &ipd: curr_xform->input_port_descriptors()) {
       auto iter = connections_to_.find({curr_xform->name(), ipd->name()});
       if (iter == connections_to_.end()) continue;
       inputs.emplace(ipd->name(), results.at({iter->second}));
     }
-    auto out = curr_xform->apply(inputs);
-    for (const auto &o: out) {
-      results.emplace(make_pair(curr_xform->name(), o.first), o.second);
+    uint32_t err;
+    std::string err_msg;
+    auto out = curr_xform->apply(inputs, err, err_msg);
+    if( err == XFORM_OK) {
+      for (const auto &o: out) {
+        results.emplace(make_pair(curr_xform->name(), o.first), o.second);
+      }
+      resolved_xforms.emplace(curr_xform->name());
+    } else {
+      spdlog::error("Xfrom {} failed with code {}: {}", curr_xform->name(), err, err_msg);
+      failed_xforms.emplace(curr_xform->name());
     }
-    resolved_xforms.emplace(curr_xform->name());
     to_satisfy.pop_back();
   }
   return true;
