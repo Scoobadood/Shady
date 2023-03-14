@@ -72,6 +72,12 @@ public:
   input_port_descriptors() const;
 
   /**
+   * @return the OutputPortsDescriptors for this xform
+   */
+  std::vector<std::shared_ptr<const OutputPortDescriptor>>
+  output_port_descriptors() const;
+
+  /**
    * @param port_name
    * @return The InputPortDescriptor for the given port or nullptr if not found.
    */

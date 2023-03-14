@@ -53,6 +53,20 @@ Xform::input_port_descriptors() const {
   return values;
 }
 
+
+/**
+ * @return the OutputPortsDescriptors for this xform
+ */
+std::vector<std::shared_ptr<const OutputPortDescriptor>>
+Xform::output_port_descriptors() const {
+  using namespace std;
+  vector<shared_ptr<const OutputPortDescriptor>> values;
+  for (const auto &e: output_port_descriptors_) {
+    values.emplace_back(e.second);
+  }
+  return values;
+}
+
 /**
  * @param port_name
  * @return The OutputPortDescriptor for the given port or nullptr if not found.
