@@ -49,7 +49,7 @@ public:
   /**
    * @return The unique name for this transform.
    */
-  const std::string &name();
+  const std::string &name() const;
 
   /**
    * @return true if there are no outputs for this xform.

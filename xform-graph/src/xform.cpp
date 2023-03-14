@@ -67,7 +67,7 @@ Xform::output_port_descriptor_for_port(const std::string &port_name) const {
   return it->second;
 }
 
-const std::string &Xform::name() {
+const std::string &Xform::name() const {
   return name_;
 }
 
