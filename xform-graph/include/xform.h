@@ -18,7 +18,6 @@
 #include <map>
 #include <vector>
 
-
 #include <OpenGL/gl3.h>
 
 const uint32_t XFORM_OK = 0;
@@ -26,23 +25,26 @@ const uint32_t XFORM_MISSING_CONFIG = 1;
 const uint32_t XFORM_INVALID_CONFIG = 2;
 const uint32_t XFORM_MISSING_INPUT = 3;
 const uint32_t XFORM_INPUT_NOT_SET = 4;
+const uint32_t XFORM_FILE_READ_FAILED = 5;
 
 
 class Xform {
 public:
   /**
- * Apply the transform to its inputs and make the result
- * available to outputs.
- * @param inputs A map from input port names to inputs.
- * @return a map from output port names to outputs.
- */
+   * Apply the transform to its inputs and make the result
+   * available to outputs.
+   * @param inputs A map from input port names to inputs.
+   * @param err Error code populated in the event of a failure. Successs has XFROM_OK
+   * @param err_msg An explanatory error message.
+   * @return a map from output port names to outputs.
+   */
   std::map<std::string, std::shared_ptr<void>>
   apply(const std::map<std::string, std::shared_ptr<void>> &inputs, uint32_t &err, std::string &err_msg);
 
   /**
    * Get a mutable reference to the config.
    */
-   XformConfig& config() {return config_;}
+  XformConfig &config() { return config_; }
 
   /**
    * @return The unique name for this transform.
@@ -66,8 +68,8 @@ public:
   /**
    * @return the InputPortsDescriptors for this xform
    */
-   std::vector<std::shared_ptr<const InputPortDescriptor>>
-   input_port_descriptors() const;
+  std::vector<std::shared_ptr<const InputPortDescriptor>>
+  input_port_descriptors() const;
 
   /**
    * @param port_name
@@ -84,20 +86,30 @@ public:
   output_port_descriptor_for_port(const std::string &port_name) const;
 
 protected:
-  explicit Xform(std::string name, XformConfig config= XformConfig{});
+  /*
+   * Construct from a subclass.
+   */
+  explicit Xform(std::string name, XformConfig config = XformConfig{});
+
   virtual ~Xform() = default;
 
-  static void allocate_textures(int32_t n, GLuint * texture_ids);
-  static void resize_textures( uint32_t n, GLuint * texture_ids, GLsizei width, GLsizei height);
+  static void allocate_textures(int32_t n, GLuint *texture_ids);
 
-  void add_input_port_descriptor(const std::string& name, const std::string& type, bool is_required = true);
-  void add_output_port_descriptor(const std::string& name, const std::string& type );
+  static void resize_textures(uint32_t n, GLuint *texture_ids, GLsizei width, GLsizei height);
+
+  void add_input_port_descriptor(const std::string &name, const std::string &type, bool is_required = true);
+
+  void add_output_port_descriptor(const std::string &name, const std::string &type);
+
   std::map<std::string, std::shared_ptr<const InputPortDescriptor>> input_port_descriptors_;
   std::map<std::string, std::shared_ptr<const OutputPortDescriptor>> output_port_descriptors_;
 
 private:
-  void validate(const std::shared_ptr<const InputPortDescriptor> &ipd,
-                const std::map<std::string, std::shared_ptr<void>> &inputs);
+/*
+ * @return true if the inputs are valid, otherwise false.
+ */
+  bool
+  Xform::is_valid(const std::map<std::string, std::shared_ptr<void>> &inputs);
 
   virtual std::map<std::string, std::shared_ptr<void>>
   do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs, uint32_t &err, std::string &err_msg) = 0;
