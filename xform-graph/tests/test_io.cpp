@@ -89,7 +89,7 @@ make_graph() {
           XformConfig{{pd3}}
   );
 
-  xf1->config().set("test_float", 0.1f);
+  xf1->config().set("test_float", 0.5f);
   xf2->config().set("test_int", 1);
   xf1->config().set("test_string", "fish");
 
@@ -113,7 +113,7 @@ TEST_F(TestIO, test_write_graph) {
   "xforms": [
     {
       "name": "in_1",
-      "type": "in_xform",
+      "type": "InXform",
       "config": [
         {
           "name": "test_int",
@@ -124,12 +124,12 @@ TEST_F(TestIO, test_write_graph) {
     },
     {
       "name": "out_1",
-      "type": "out_xform",
+      "type": "OutXform",
       "config": [
         {
           "name": "test_float",
           "type": "FLOAT",
-          "value": 0.1
+          "value": 0.5
         },
         {
           "name": "test_string",
