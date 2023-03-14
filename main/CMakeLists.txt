@@ -14,19 +14,21 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(imgui)
 
+add_definitions(-DGL_SILENCE_DEPRECATION)
+
 # Command line tool. Still requires GLFW to establish OpenGL context
-add_executable(iv
-        src/xxmain.cpp
+add_executable(shady_cli
+        src/main_cli.cpp
         include/graph.h src/graph.cpp
 )
 
-target_include_directories(iv
+target_include_directories(shady_cli
         PRIVATE
         include
         ${glfw3_SOURCE_DIR}/include
         )
 
-target_link_libraries(iv
+target_link_libraries(shady_cli
         PRIVATE
         Xform
         glfw
@@ -40,20 +42,20 @@ SET(IMGUI_SOURCES ${imgui_SOURCE_DIR}/imgui.cpp ${imgui_SOURCE_DIR}/imgui_demo.c
         ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
         )
 
-add_executable(toy
+add_executable(shady
         src/main_ui.cpp
         include/graph.h src/graph.cpp
         ${IMGUI_SOURCES}
         )
 
-target_include_directories(toy
+target_include_directories(shady
         PRIVATE
         include
         ${glfw3_SOURCE_DIR}/include
         ${imgui_SOURCE_DIR}
         )
 
-target_link_libraries(toy
+target_link_libraries(shady
         PRIVATE
         Xform
         glfw

@@ -63,7 +63,7 @@ int main() {
     std::map<std::pair<std::string, std::string>, ImVec2> out_port_coords;
 
     // For each node, make a box and add a name to it.
-    for (auto &xform: graph.xforms()) {
+    for (const auto &xform: graph.xforms()) {
       ImGui::Begin(xform->name().c_str(), nullptr,
                    ImGuiWindowFlags_NoResize |
                    ImGuiWindowFlags_NoCollapse
@@ -119,7 +119,6 @@ int main() {
       ImVec2 from = out_port_coords.at(conn.first);
       ImVec2 to = in_port_coords.at(conn.second);
       auto midX = from.x + (to.x - from.x) / 2.0f;
-      auto midY = from.y + (to.y - from.y) / 2.0f;
       ImGui::GetBackgroundDrawList()->AddBezierCubic(from,
                                                      ImVec2(midX, from.y),
                                                      ImVec2(midX, to.y),
