@@ -1,5 +1,12 @@
 #include "save-file-xform.h"
 #include <spdlog/spdlog-inl.h>
+#include "xform-texture-meta.h"
+#include "image_io.h"
+
+void save_texture_to_file(const std::string &file_name,
+                          const std::shared_ptr<TextureMetadata> &tx_data,
+                          uint32_t &err,
+                          std::string &err_msg);
 
 uint32_t SaveFileXform::next_idx_ = 0;
 
@@ -17,14 +24,52 @@ SaveFileXform::SaveFileXform() //
 }
 
 std::map<std::string, std::shared_ptr<void>>
-SaveFileXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs, uint32_t &err, std::string &err_msg) {
-  std::string file_name;
+SaveFileXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs, uint32_t &err,
+                        std::string &err_msg) {
+  using namespace std;
+
+  string file_name;
   if (!config().get("file_name", file_name)) {
-    spdlog::error("No file name specified for {}", name());
+    err = XFORM_MISSING_CONFIG;
+    err_msg = fmt::format("Missing 'file_name'");
     return {};
   }
+
+  /* Extract input image */
+  auto it = inputs.find("image");
+  if (it == inputs.end()) {
+    err = XFORM_MISSING_INPUT;
+    err_msg = fmt::format("Missing 'image'");
+    return {};
+  }
+
+  auto img = std::static_pointer_cast<TextureMetadata>(it->second);
+  if (!img) {
+    err = XFORM_INPUT_NOT_SET;
+    err_msg = fmt::format("'image' is null");
+    return {};
+  }
+
+  // Pull pixels and save to file
+  save_texture_to_file(file_name, img, err, err_msg);
 
   spdlog::info("Saved file {}", file_name);
   return {
   };
+}
+
+void save_texture_to_file(const std::string &file_name,
+                          const std::shared_ptr<TextureMetadata> &tx_data,
+                          uint32_t &err,
+                          std::string &err_msg) {
+
+  auto buffer = new uint8_t[tx_data->width * tx_data->height * 4];
+  glBindTexture(GL_TEXTURE_2D, tx_data->texture_id);
+  glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+
+  auto x = save_png(file_name, tx_data->width, tx_data->height, buffer);
+  delete[] buffer;
+
+  err = XFORM_OK;
+  err_msg = "OK";
 }
