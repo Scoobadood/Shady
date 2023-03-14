@@ -24,7 +24,9 @@ TEST_F(TestBaseXform, default_to_no_inputs) {
   public:
     NoOpXform() : Xform("Noop") {}
 
-    std::map<std::string, void *> do_apply(const std::map<std::string, void *> &inputs) override {
+    std::map<std::string, std::shared_ptr<void>>
+    do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,
+             uint32_t &err, std::string &err_msg) override {
       return {};
     }
   };
@@ -39,8 +41,11 @@ TEST_F(TestBaseXform, adding_two_inputs_should_fail) {
       add_input_port_descriptor("fish", "image");
       add_input_port_descriptor("fish", "image");
     }
-    std::map<std::string, void *> do_apply(const std::map<std::string, void *> &inputs) override{
-      return{};
+
+    std::map<std::string, std::shared_ptr<void>>
+    do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,
+             uint32_t &err, std::string &err_msg) override {
+      return {};
     }
   };
 
@@ -58,8 +63,11 @@ TEST_F(TestBaseXform, adding_two_different_inputs_should_not_fail) {
       add_input_port_descriptor("fish", "image");
       add_input_port_descriptor("fish2", "image");
     }
-    std::map<std::string, void *> do_apply(const std::map<std::string, void *> &inputs) override{
-      return{};
+
+    std::map<std::string, std::shared_ptr<void>>
+    do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,
+             uint32_t &err, std::string &err_msg) override {
+      return {};
     }
   };
 
@@ -67,7 +75,7 @@ TEST_F(TestBaseXform, adding_two_different_inputs_should_not_fail) {
   std::string test = oss_.str();
   EXPECT_EQ(2, tx->input_port_descriptors().size());
   std::vector<std::string> names;
-  for( auto & ipd : tx->input_port_descriptors()) {
+  for (auto &ipd: tx->input_port_descriptors()) {
     names.push_back(ipd->name());
   }
   EXPECT_THAT(names, testing::UnorderedElementsAre("fish", "fish2"));
