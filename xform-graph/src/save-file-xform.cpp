@@ -35,22 +35,13 @@ SaveFileXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &inpu
     return {};
   }
 
-  /* Extract input image */
-  auto it = inputs.find("image");
-  if (it == inputs.end()) {
-    err = XFORM_MISSING_INPUT;
-    err_msg = fmt::format("Missing 'image'");
-    return {};
-  }
-
-  auto img = std::static_pointer_cast<TextureMetadata>(it->second);
+  auto img = std::static_pointer_cast<TextureMetadata>(inputs.at("image"));
   if (!img) {
     err = XFORM_INPUT_NOT_SET;
     err_msg = fmt::format("'image' is null");
     return {};
   }
 
-  // Pull pixels and save to file
   save_texture_to_file(file_name, img, err, err_msg);
 
   spdlog::info("Saved file {}", file_name);
@@ -70,6 +61,11 @@ void save_texture_to_file(const std::string &file_name,
   auto x = save_png(file_name, tx_data->width, tx_data->height, buffer);
   delete[] buffer;
 
-  err = XFORM_OK;
-  err_msg = "OK";
+  if( x == IO_OK) {
+    err = XFORM_OK;
+    err_msg = "OK";
+  } else {
+    err = XFORM_FILE_SAVE_FAILED;
+    err_msg = fmt::format("Failed to write to {}", file_name);
+  }
 }

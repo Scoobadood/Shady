@@ -15,6 +15,7 @@ add_library(Xform SHARED
         src/split-channel-xform.cpp include/split-channel-xform.h
         src/save-file-xform.cpp include/save-file-xform.h
         src/xform-config.cpp include/xform-config.h
+        src/render-xform.cpp include/render-xform.h
 
         src/image_io.cpp include/image_io.h
         )

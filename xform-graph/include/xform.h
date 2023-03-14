@@ -26,7 +26,7 @@ const uint32_t XFORM_INVALID_CONFIG = 2;
 const uint32_t XFORM_MISSING_INPUT = 3;
 const uint32_t XFORM_INPUT_NOT_SET = 4;
 const uint32_t XFORM_FILE_READ_FAILED = 5;
-
+const uint32_t XFORM_FILE_SAVE_FAILED = 6;
 
 class Xform {
 public:
@@ -105,12 +105,6 @@ protected:
   std::map<std::string, std::shared_ptr<const OutputPortDescriptor>> output_port_descriptors_;
 
 private:
-/*
- * @return true if the inputs are valid, otherwise false.
- */
-  bool
-  Xform::is_valid(const std::map<std::string, std::shared_ptr<void>> &inputs);
-
   virtual std::map<std::string, std::shared_ptr<void>>
   do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs, uint32_t &err, std::string &err_msg) = 0;
 

@@ -1,7 +1,6 @@
 #include "split-channel-xform.h"
-
-#include <spdlog/spdlog-inl.h>
 #include "xform-texture-meta.h"
+#include <spdlog/spdlog-inl.h>
 
 const GLchar *v_shader_source[] = {R"(
 #version 410 core
@@ -37,17 +36,11 @@ void main() {
 )"};
 
 
-void init_buffers(GLuint &vao_id, GLuint &vbo_verts, GLuint &vbo_indices);
-
 uint32_t SplitChannelXform::next_idx_ = 0;
 
 SplitChannelXform::SplitChannelXform() //
-        : Xform("SplitChannel_" + std::to_string(next_idx_++), XformConfig()) //
-        , texture_ids_{0,0,0,0}//
-        , fbo_{0} //
-        , vao_id_{0}//
-        , vbo_verts_{0}//
-        , vbo_indices_{0}//
+        : RenderXform("SplitChannel_" + std::to_string(next_idx_++), XformConfig()) //
+        , texture_ids_{0, 0, 0, 0}//
 {
   add_input_port_descriptor("image", "image");
   add_output_port_descriptor("red", "image");
@@ -55,16 +48,15 @@ SplitChannelXform::SplitChannelXform() //
   add_output_port_descriptor("blue", "image");
   add_output_port_descriptor("alpha", "image");
 
-
   init_gl_resources();
+
+  split_prog_ = std::unique_ptr<Shader>(new Shader(v_shader_source,
+                                                   (const GLchar **) nullptr,
+                                                   f_shader_source));
 }
 
 SplitChannelXform::~SplitChannelXform() {
-  glDeleteBuffers(1, &vbo_verts_);
-  glDeleteBuffers(1, &vbo_indices_);
-  glDeleteVertexArrays(1, &vao_id_);
   glDeleteTextures(4, texture_ids_);
-  glDeleteFramebuffers(1, &fbo_);
 }
 
 std::map<std::string, std::shared_ptr<void>>
@@ -87,9 +79,11 @@ SplitChannelXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &
 
   resize_textures(4, texture_ids_, img->width, img->height);
 
-  //FIXME: Do the thing
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
-  glBindVertexArray(vao_id_);
+  /*
+   * Render
+   */
+  start_render();
+
   glViewport(0, 0, img->width, img->height);
   glClearColor(0, 0, 0, 1.);
   glClear(GL_COLOR_BUFFER_BIT);
@@ -97,10 +91,11 @@ SplitChannelXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &
   split_prog_->use();
   split_prog_->set1i("input_image", 0);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-  gl_check_error_and_halt("draw elements");
-  // Unbind
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  //FIXME End
+
+  end_render();
+  /*
+   * End of Render
+   */
 
   spdlog::info("Split");
 
@@ -111,7 +106,7 @@ SplitChannelXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &
                     texture_ids_[i], img->width, img->height));
   }
   err = XFORM_OK;
-  err_msg="ok";
+  err_msg = "ok";
   return {
           {"red",   out[0]},
           {"green", out[1]},
@@ -120,35 +115,8 @@ SplitChannelXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &
   };
 }
 
-void init_buffers(GLuint &vao_id, GLuint &vbo_verts, GLuint &vbo_indices) {
-  float vertex_data[4 * 4] = {-1.0, -1.0, 0, 0,
-                              1.0, -1.0, 1, 0,
-                              1.0, 1.0, 1, 1,
-                              -1.0, 1.0, 0, 1
-  };
-  GLushort indices[] = {0, 1, 2, 0, 2, 3};
-
-  glGenVertexArrays(1, &vao_id);
-  glGenBuffers(1, &vbo_verts);
-  glGenBuffers(1, &vbo_indices);
-  glBindVertexArray(vao_id);
-
-  glBindBuffer(GL_ARRAY_BUFFER, vbo_verts);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_data), &vertex_data[0], GL_STATIC_DRAW);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) (2 * sizeof(float)));
-  glEnableVertexAttribArray(1);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_indices);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], GL_STATIC_DRAW);
-  gl_check_error_and_halt("init_buffers()");
-}
-
 void
-SplitChannelXform::init_gl_resources() {
-  glGenFramebuffers(1, &fbo_);
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
+SplitChannelXform::do_init_fbo() {
   allocate_textures(4, texture_ids_);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                          GL_TEXTURE_2D, texture_ids_[0], 0);
@@ -158,18 +126,6 @@ SplitChannelXform::init_gl_resources() {
                          GL_TEXTURE_2D, texture_ids_[2], 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3,
                          GL_TEXTURE_2D, texture_ids_[3], 0);
-
   GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
   glDrawBuffers(4, drawBuffers);
-  auto err = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-  if (err != GL_FRAMEBUFFER_COMPLETE) {
-    throw std::runtime_error(fmt::format("FB not complete : {}", err));
-  }
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-  init_buffers(vao_id_, vbo_verts_, vbo_indices_);
-  split_prog_ = std::unique_ptr<Shader>(new Shader(v_shader_source,
-                                                   (const GLchar **) nullptr,
-                                                   f_shader_source));
-  gl_check_error_and_halt("init_gl_resources()");
 }
