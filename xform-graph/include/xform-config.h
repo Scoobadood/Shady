@@ -10,7 +10,6 @@
 #include <utility>
 #include <vector>
 
-
 class XformConfig {
 public:
   struct PropertyDescriptor {
@@ -19,6 +18,7 @@ public:
       STRING,
       FLOAT,
       INT,
+      UNKNOWN
     } type;
 
     bool operator==(const PropertyDescriptor &other) const {
@@ -29,6 +29,8 @@ public:
   explicit XformConfig(const std::vector<const PropertyDescriptor> &descriptors = {});
 
   std::vector<const PropertyDescriptor> descriptors() const;
+
+  PropertyDescriptor::Type type_for_property(const std::string& prop_name) const;
 
   void set(const std::string &name, const std::string &value);
 

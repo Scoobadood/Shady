@@ -2,12 +2,13 @@
 #define IMAGE_TOYS_LOAD_FILE_XFORM_H
 
 #include "xform.h"
+#include "xform-factory.h"
 
 class LoadFileXform : public Xform {
 public:
   LoadFileXform();
 
-  explicit LoadFileXform(std::string name);
+  explicit LoadFileXform(const std::string& name);
 
   ~LoadFileXform() override;
 
@@ -24,5 +25,7 @@ private:
   /* Texture to load image to */
   GLuint image_tx_;
 };
+
+REGISTER_CLASS(LoadFileXform)
 
 #endif //IMAGE_TOYS_LOAD_FILE_XFORM_H

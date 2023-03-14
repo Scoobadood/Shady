@@ -2,6 +2,7 @@
 #define IMAGE_TOYS_SAVE_FILE_XFORM_H
 
 #include "xform.h"
+#include "xform-factory.h"
 
 class SaveFileXform : public Xform {
 public:
@@ -21,5 +22,7 @@ private:
   do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,
            uint32_t &err, std::string &err_msg) override;
 };
+
+REGISTER_CLASS(SaveFileXform)
 
 #endif //IMAGE_TOYS_SAVE_FILE_XFORM_H

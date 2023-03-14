@@ -5,6 +5,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(stb_image)
 
+# Nlohman JSON
+FetchContent_Declare(
+        nlohman_json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG v3.11.2
+)
+FetchContent_MakeAvailable(nlohman_json)
+
 add_definitions(-DGL_SILENCE_DEPRECATION)
 
 add_library(Xform SHARED
@@ -17,6 +25,7 @@ add_library(Xform SHARED
 
         # Graph IO
         src/xform-io.cpp include/xform-io.h
+        src/xform-factory.cpp include/xform-factory.h
 
         # Specific functions
         src/image_io.cpp include/image_io.h
@@ -35,6 +44,8 @@ target_include_directories(Xform
 target_link_libraries(Xform
         PUBLIC
         Common
+        PRIVATE
+        nlohmann_json::nlohmann_json
         )
 
 # Integration Test

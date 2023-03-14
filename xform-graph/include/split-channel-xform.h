@@ -18,6 +18,7 @@
 #ifndef IMAGE_TOYS_SPLIT_CHANNEL_XFORM_H
 #define IMAGE_TOYS_SPLIT_CHANNEL_XFORM_H
 
+#include "xform-factory.h"
 #include "gl_utils.h"
 #include "shader.h"
 #include "render-xform.h"
@@ -48,5 +49,8 @@ private:
 
   std::shared_ptr<Shader> split_prog_;
 };
+
+REGISTER_CLASS(SplitChannelXform)
+
 
 #endif //IMAGE_TOYS_SPLIT_CHANNEL_XFORM_H

@@ -2,6 +2,7 @@
 #include "image_io.h"
 #include "gl_utils.h"
 #include "xform-texture-meta.h"
+#include "xform-factory.h"
 
 #include <spdlog/spdlog-inl.h>
 
@@ -14,9 +15,10 @@ std::string LoadFileXform::type() const {
   return TYPE;
 }
 
-LoadFileXform::LoadFileXform(std::string name) //
-        : Xform(std::move(name) //
-        , XformConfig({{"file_name", XformConfig::PropertyDescriptor::STRING}})) {
+LoadFileXform::LoadFileXform(const std::string &name) //
+        : Xform(name  //
+        , XformConfig({{"file_name", XformConfig::PropertyDescriptor::STRING}})) //
+{
   image_tx_ = 0;
   add_output_port_descriptor("image", "image");
   allocate_textures(1, &image_tx_);

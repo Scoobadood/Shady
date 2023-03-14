@@ -1,129 +1,84 @@
 #include "xform-io.h"
 #include "xform-graph.h"
+#include "xform-config.h"
+#include "xform-factory.h"
 
 #include <fstream>
 #include <iomanip>
+
+#include "nlohmann/json.hpp"
+
 #include <spdlog/spdlog-inl.h>
 
-
-std::string string_value_of_pd(const XformConfig::PropertyDescriptor &pd, const XformConfig &c) {
+std::string string_value_of_pd_type(XformConfig::PropertyDescriptor::Type type) {
   std::string value;
-  switch (pd.type) {
+  switch (type) {
     case XformConfig::PropertyDescriptor::STRING:
-      c.get(pd.name, value);
-      value = fmt::format("\"{}\"", value);
-      break;
-    case XformConfig::PropertyDescriptor::FLOAT: {
-      float f;
-      c.get(pd.name, f);
-      value = fmt::format("{}", f);
-      break;
-    }
-    case XformConfig::PropertyDescriptor::INT: {
-      int i;
-      c.get(pd.name, i);
-      value = fmt::format("{}", i);
-      break;
-    }
+      return "STRING";
+    case XformConfig::PropertyDescriptor::FLOAT:
+      return "FLOAT";
+    case XformConfig::PropertyDescriptor::INT:
+      return "INT";
     default:
-      spdlog::warn("Unrecognised parameter type {}", pd.type);
-      value = "";
-      break;
+      return "???";
   }
-  return value;
 }
 
-
-/*
- * Properties are written:
- * type may be FLOAT, INT or STRING.
- * Case is ignored.
-
-     {
-        "name" : "p1",
-        "type" : "float",
-        "value" : 0.1,
-     },
-
- */
-void xform_write_property(std::ostream &os,
-                          int indent,
-                          const XformConfig::PropertyDescriptor &pd,
-                          const std::string &value) {
-  using namespace std;
-
-  static const std::string pd_type_name[]{
-          "STRING", "FLOAT", "INT"
-  };
-
-  os << setw(indent + 1) << "{" << endl;
-  os << setw(indent + 8) << "\"name\"" << " : \"" << pd.name << "\"," << endl;
-  os << setw(indent + 8) << "\"type\"" << " : \"" << pd_type_name[pd.type] << "\"," << endl;
-  os << setw(indent + 9) << "\"value\"" << " : " << value << "," << endl;
-  os << setw(indent + 2) << "}," << endl;
+XformConfig::PropertyDescriptor::Type type_for_string(const std::string &s) {
+  std::string str = s;
+  std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+  if ("FLOAT" == s) return XformConfig::PropertyDescriptor::FLOAT;
+  if ("INT" == s) return XformConfig::PropertyDescriptor::INT;
+  if ("STRING" == s) return XformConfig::PropertyDescriptor::STRING;
+  spdlog::error("Invalid tpye {}", s);
+  return XformConfig::PropertyDescriptor::STRING;
 }
-
-/*
- {
-   "name": "xform_name",
-   "type": "xform_type",
-   "config" : [
-      property1,
-      property2,
-      ...
-   ],
-}
-
- */
-void xform_write(std::ostream &os,
-                 int indent,
-                 const std::shared_ptr<const Xform> &xform) {
-  using namespace std;
-
-  os << setw(indent + 1) << "{" << endl;
-  os << setw(indent + 8) << "\"name\"" << " : \"" << xform->name() << "\"," << endl;
-  os << setw(indent + 8) << "\"type\"" << " : \"" << xform->type() << "\"," << endl;
-  os << setw(indent + 10) << "\"config\"" << " : [" << endl;
-  const auto &c = xform->config();
-  for (const auto &pd: xform->config().descriptors()) {
-    auto value = string_value_of_pd(pd, c);
-    xform_write_property(os, indent + 4, pd, value);
-  }
-  os << setw(indent + 3) << "]" << endl;
-  os << setw(indent + 2) << "}," << endl;
-}
-
-void
-xform_write_connection(std::ostream &os,
-                       int indent,
-                       const std::pair<std::pair<std::string, std::string>,
-                               std::pair<std::string, std::string>> &conn) {
-  using namespace std;
-  os << setw(indent + 1) << "{" << endl;
-  os << setw(indent + 14) << "\"from_xform\"" << " : \"" << conn.first.first << "\"," << endl;
-  os << setw(indent + 13) << "\"from_port\"" << " : \"" << conn.first.second << "\"," << endl;
-  os << setw(indent + 12) << "\"to_xform\"" << " : \"" << conn.second.first << "\"," << endl;
-  os << setw(indent + 11) << "\"to_port\"" << " : \"" << conn.second.second << "\"," << endl;
-  os << setw(indent + 2) << "}," << endl;
-}
-
 
 int32_t
 xform_write_graph(std::ostream &os, const std::shared_ptr<XformGraph> &graph) {
   using namespace std;
+  using json = nlohmann::ordered_json;
 
-  os << "{" << endl;
-  os << setw(10) << "\"xforms\"" << " : [" << endl;
+  json g_j;
   for (const auto &x: graph->xforms()) {
-    xform_write(os, 4, x);
+    json x_j;
+    x_j["name"] = x->name();
+    x_j["type"] = x->type();
+
+    json cfg_j;
+    for (const auto &pd: x->config().descriptors()) {
+      json p_j;
+      p_j["name"] = pd.name;
+      p_j["type"] = string_value_of_pd_type(pd.type);
+      if (pd.type == XformConfig::PropertyDescriptor::STRING) {
+        std::string value;
+        x->config().get(pd.name, value);
+        p_j["value"] = value;
+      } else if (pd.type == XformConfig::PropertyDescriptor::FLOAT) {
+        float value;
+        x->config().get(pd.name, value);
+        p_j["value"] = value;
+      } else /* pd.type == INT */ {
+        int value;
+        x->config().get(pd.name, value);
+        p_j["value"] = value;
+      }
+      cfg_j.emplace_back(p_j);
+    }
+    x_j["config"] = cfg_j;
+    g_j["xforms"].emplace_back(x_j);
   }
-  os << setw(4) << "]," << endl;
-  os << setw(15) << "\"connections\"" << " : [" << endl;
+
   for (const auto &conn: graph->connections()) {
-    xform_write_connection(os, 4, conn);
+    json c_j;
+    c_j["from_xform"] = conn.first.first;
+    c_j["from_port"] = conn.first.second;
+    c_j["to_xform"] = conn.second.first;
+    c_j["to_port"] = conn.second.second;
+    g_j["connections"].emplace_back(c_j);
   }
-  os << setw(3) << "]" << endl;
-  os << "}" << endl;
+
+  os << setw(2) << g_j << endl;
 
   return 0;
 }
@@ -143,7 +98,49 @@ save_graph(const std::string &file_name, const std::shared_ptr<XformGraph> &grap
   return 0;
 }
 
+std::shared_ptr<XformGraph> xform_read_graph(std::istream &is) {
+  using json = nlohmann::json;
+  json graph_json = json::parse(is);
+  auto xforms = graph_json.at("xforms");
+  auto connections = graph_json.at("connections");
+
+  auto graph = std::make_shared<XformGraph>();
+
+  for (auto &xf_j: xforms) {
+    std::string name = xf_j.at("name");
+    std::string type = xf_j.at("type");
+    auto cfg = xf_j.at("config");
+
+    std::vector<const XformConfig::PropertyDescriptor> pds;
+    for (auto &cf_j: cfg) {
+      std::string prop_name = cf_j.at("name");
+      auto prop_type = type_for_string(cf_j.at("type"));
+      pds.push_back({prop_name, prop_type});
+    }
+    XformConfig conf{pds};
+    std::map<std::string, std::string> config;
+
+    for (auto &cf_j: cfg) {
+      auto prop_name = cf_j.at("name");
+      std::string prop_value;
+      if (cf_j.at("value").is_number()) {
+        prop_value = to_string(cf_j.at("value"));
+      } else {
+        prop_value = cf_j.at("value");
+      }
+      config.emplace(prop_name, prop_value);
+    }
+    auto xform = XformFactory::make_xform(type, name, config);
+    graph->add_xform(xform);
+  }
+
+  return graph;
+}
+
 std::shared_ptr<XformGraph>
 load_graph(const std::string &file_name) {
-  return nullptr;
+
+  std::ifstream f(file_name);
+
+  return xform_read_graph(f);
 }

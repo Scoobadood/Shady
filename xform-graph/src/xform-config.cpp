@@ -94,3 +94,10 @@ XformConfig::get(const std::string &name, int &value) const {
   return true;
 }
 
+XformConfig::PropertyDescriptor::Type
+XformConfig::type_for_property(const std::string& prop_name) const {
+  auto it = descriptors_.find(prop_name);
+  if( it == descriptors_.end())
+    return PropertyDescriptor::UNKNOWN;
+  return it->second.type;
+}
