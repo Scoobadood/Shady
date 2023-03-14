@@ -204,3 +204,13 @@ XformGraph::xforms() const {
   }
   return xforms;
 }
+
+std::vector<std::pair<std::pair<std::string, std::string>,std::pair<std::string, std::string>>>
+XformGraph::connections() const {
+  using namespace std;
+  vector<pair<pair<string,string>, pair<string,string>>> conns;
+  for( auto & fcon : connections_from_) {
+    conns.emplace_back(fcon);
+  }
+  return conns;
+}

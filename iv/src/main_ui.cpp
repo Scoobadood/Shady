@@ -59,6 +59,9 @@ int main() {
      * Render the graph
      */
 
+    std::map<std::pair<std::string, std::string>, ImVec2> in_port_coords;
+    std::map<std::pair<std::string, std::string>, ImVec2> out_port_coords;
+
     // For each node, make a box and add a name to it.
     for (auto &xform: graph.xforms()) {
       ImGui::Begin(xform->name().c_str(), nullptr,
@@ -79,6 +82,12 @@ int main() {
         ImGui::GetForegroundDrawList()->AddCircleFilled(port_pos,
                                                         5.0f, IM_COL32(255, 0, 0, 255),
                                                         0);
+        in_port_coords.emplace(std::make_pair(xform->name(), ipd->name()),
+                               port_pos);
+
+        auto sz = ImGui::CalcTextSize(ipd->name().c_str());
+        ImGui::GetForegroundDrawList()->AddText({port_pos.x + 5.0f, port_pos.y - sz.y * 0.5f}, IM_COL32_BLACK,
+                                                ipd->name().c_str());
         port_pos.y += spacing;
       }
 
@@ -88,15 +97,36 @@ int main() {
       auto num_outputs = xform->output_port_descriptors().size();
       spacing = window_size.y / (num_outputs + 1);
       port_pos = {window_pos.x + window_size.x, window_pos.y + spacing};
-      for( const auto & opd : xform->output_port_descriptors()) {
+      for (const auto &opd: xform->output_port_descriptors()) {
         ImGui::GetForegroundDrawList()->AddCircleFilled(port_pos,
                                                         5.0f, IM_COL32(0, 255, 0, 255),
                                                         0);
+        out_port_coords.emplace(std::make_pair(xform->name(), opd->name()),
+                                port_pos);
+        auto sz = ImGui::CalcTextSize(opd->name().c_str());
+        ImGui::GetForegroundDrawList()->AddText({window_pos.x + window_size.x - sz.x - 5.0f, port_pos.y - sz.y * 0.5f},
+                                                IM_COL32_BLACK, opd->name().c_str());
         port_pos.y += spacing;
       }
 
       ImGui::End();
     }
+
+    /**
+     * Render connections
+     */
+    for (const auto &conn: graph.connections()) {
+      ImVec2 from = out_port_coords.at(conn.first);
+      ImVec2 to = in_port_coords.at(conn.second);
+      auto midX = from.x + (to.x - from.x) / 2.0f;
+      auto midY = from.y + (to.y - from.y) / 2.0f;
+      ImGui::GetBackgroundDrawList()->AddBezierCubic(from,
+                                                     ImVec2(midX, from.y),
+                                                     ImVec2(midX, to.y),
+                                                     to,
+                                                     IM_COL32(80, 60, 0, 255), 2);
+    }
+
 
     /*
      * Do actual rendering

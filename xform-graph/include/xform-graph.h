@@ -36,6 +36,12 @@ public:
   std::set<std::string>
   dependencies_for(const std::shared_ptr<Xform> &xform) const;
 
+  std::vector<
+          std::pair<
+                  std::pair<std::string, std::string>,
+                  std::pair<std::string, std::string>>>
+  connections() const;
+
 private:
   std::map<std::string, std::shared_ptr<Xform>> xforms_;
   std::map<std::pair<std::string, std::string>, std::pair<std::string, std::string>> connections_from_;
