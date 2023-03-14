@@ -22,3 +22,6 @@ engineer should be able to port it to Linux or Windows flavours.
 OpenGL 4.1 : Because.
 GLFW       : To handle windowing and context
 ImGui      : For UX widgets.
+
+
+![The story so far](https://github.com/Scoobadood/Shady/docs/img.png)

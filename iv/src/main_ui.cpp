@@ -13,7 +13,7 @@ GLFWwindow *initgl() {
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
   // Create window with graphics context
-  auto window = glfwCreateWindow(1280, 720, "Graph Toy", nullptr, nullptr);
+  auto window = glfwCreateWindow(900, 620, "Shady!", nullptr, nullptr);
   glfwMakeContextCurrent(window);
   glfwSwapInterval(1); // Enable vsync
   return window;
