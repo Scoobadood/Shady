@@ -181,7 +181,7 @@ bool XformGraph::evaluate() const {
     uint32_t err;
     std::string err_msg;
     auto out = curr_xform->apply(inputs, err, err_msg);
-    if( err == XFORM_OK) {
+    if (err == XFORM_OK) {
       for (const auto &o: out) {
         results.emplace(make_pair(curr_xform->name(), o.first), o.second);
       }
@@ -193,4 +193,14 @@ bool XformGraph::evaluate() const {
     to_satisfy.pop_back();
   }
   return true;
+}
+
+std::vector<std::shared_ptr<const Xform>>
+XformGraph::xforms() const {
+  using namespace std;
+  vector<shared_ptr<const Xform>> xforms;
+  for (auto &e: xforms_) {
+    xforms.push_back(e.second);
+  }
+  return xforms;
 }
