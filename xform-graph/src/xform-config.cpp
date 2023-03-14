@@ -50,7 +50,7 @@ XformConfig::set(const std::string &name, int value) {
 }
 
 bool
-XformConfig::get(const std::string &name, std::string &value) {
+XformConfig::get(const std::string &name, std::string &value) const {
   auto it = descriptors_.find(name);
   if (it == descriptors_.end()) return false;
   if (it->second.type != PropertyDescriptor::STRING) return false;
@@ -65,7 +65,7 @@ XformConfig::get(const std::string &name, std::string &value) {
 }
 
 bool
-XformConfig::get(const std::string &name, float &value) {
+XformConfig::get(const std::string &name, float &value) const {
   auto it = descriptors_.find(name);
   if (it == descriptors_.end()) return false;
   if (it->second.type != PropertyDescriptor::FLOAT) return false;
@@ -80,7 +80,7 @@ XformConfig::get(const std::string &name, float &value) {
 }
 
 bool
-XformConfig::get(const std::string &name, int &value) {
+XformConfig::get(const std::string &name, int &value) const {
   auto it = descriptors_.find(name);
   if (it == descriptors_.end()) return false;
   if (it->second.type != PropertyDescriptor::INT) return false;

@@ -5,17 +5,26 @@
 
 #include <spdlog/spdlog-inl.h>
 
+#include <utility>
+
+const std::string TYPE = "LoadFile";
 uint32_t LoadFileXform::next_idx_ = 0;
 
-LoadFileXform::LoadFileXform() //
-        : Xform("LoadFile_" + std::to_string(next_idx_++),
-                XformConfig({
-                                    {"file_name", XformConfig::PropertyDescriptor::STRING}})) //
-        , image_tx_{0}//
-{
+std::string LoadFileXform::type() const {
+  return TYPE;
+}
+
+LoadFileXform::LoadFileXform(std::string name) //
+        : Xform(std::move(name) //
+        , XformConfig({{"file_name", XformConfig::PropertyDescriptor::STRING}})) {
+  image_tx_ = 0;
   add_output_port_descriptor("image", "image");
   allocate_textures(1, &image_tx_);
 }
+
+LoadFileXform::LoadFileXform()
+        : LoadFileXform(fmt::format("{}_{}", TYPE, next_idx_++)) {}
+
 
 LoadFileXform::~LoadFileXform() {
   glDeleteTextures(1, &image_tx_);

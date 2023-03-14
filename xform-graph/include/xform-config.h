@@ -15,7 +15,7 @@ class XformConfig {
 public:
   struct PropertyDescriptor {
     std::string name;
-    enum {
+    enum Type {
       STRING,
       FLOAT,
       INT,
@@ -36,11 +36,11 @@ public:
 
   void set(const std::string &name, int value);
 
-  bool get(const std::string &name, std::string &value);
+  bool get(const std::string &name, std::string &value) const;
 
-  bool get(const std::string &name, float &value);
+  bool get(const std::string &name, float &value) const;
 
-  bool get(const std::string &name, int &value);
+  bool get(const std::string &name, int &value) const;
 
 private:
   class XProperty {

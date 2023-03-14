@@ -7,7 +7,11 @@ class LoadFileXform : public Xform {
 public:
   LoadFileXform();
 
+  explicit LoadFileXform(std::string name);
+
   ~LoadFileXform() override;
+
+  std::string type() const override;
 
 protected:
   static uint32_t next_idx_;

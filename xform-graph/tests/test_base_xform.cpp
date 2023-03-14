@@ -23,6 +23,7 @@ TEST_F(TestBaseXform, default_to_no_inputs) {
   class NoOpXform : public Xform {
   public:
     NoOpXform() : Xform("Noop") {}
+    std::string type() const override { return "noop";}
 
     std::map<std::string, std::shared_ptr<void>>
     do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,
@@ -41,6 +42,7 @@ TEST_F(TestBaseXform, adding_two_inputs_should_fail) {
       add_input_port_descriptor("fish", "image");
       add_input_port_descriptor("fish", "image");
     }
+    std::string type() const override { return "noop";}
 
     std::map<std::string, std::shared_ptr<void>>
     do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,
@@ -63,6 +65,7 @@ TEST_F(TestBaseXform, adding_two_different_inputs_should_not_fail) {
       add_input_port_descriptor("fish", "image");
       add_input_port_descriptor("fish2", "image");
     }
+    std::string type() const override { return "noop";}
 
     std::map<std::string, std::shared_ptr<void>>
     do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,

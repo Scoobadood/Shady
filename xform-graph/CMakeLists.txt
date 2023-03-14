@@ -8,16 +8,22 @@ FetchContent_MakeAvailable(stb_image)
 add_definitions(-DGL_SILENCE_DEPRECATION)
 
 add_library(Xform SHARED
+        # Core graph
         src/xform-graph.cpp include/xform-graph.h
         src/xform.cpp include/xform.h
         src/xform-port.cpp include/xform-port.h
+        src/render-xform.cpp include/render-xform.h
+        src/xform-config.cpp include/xform-config.h
+
+        # Graph IO
+        src/xform-io.cpp include/xform-io.h
+
+        # Specific functions
+        src/image_io.cpp include/image_io.h
         src/load-file-xform.cpp include/load-file-xform.h
         src/split-channel-xform.cpp include/split-channel-xform.h
         src/save-file-xform.cpp include/save-file-xform.h
-        src/xform-config.cpp include/xform-config.h
-        src/render-xform.cpp include/render-xform.h
 
-        src/image_io.cpp include/image_io.h
         )
 
 target_include_directories(Xform
@@ -46,6 +52,7 @@ target_link_libraries(xform_int_test
 add_executable(xform_unit_tests
         tests/test_main.cpp
         tests/test_ports.cpp tests/test_ports.h
+        tests/test_io.cpp
         tests/test_base_xform.cpp tests/test_base_xform.h
         tests/test_config.cpp
         )

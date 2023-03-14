@@ -37,9 +37,15 @@ void main() {
 
 
 uint32_t SplitChannelXform::next_idx_ = 0;
+const std::string TYPE = "SplitChannel";
 
-SplitChannelXform::SplitChannelXform() //
-        : RenderXform("SplitChannel_" + std::to_string(next_idx_++), XformConfig()) //
+std::string SplitChannelXform::type() const {
+  return TYPE;
+}
+
+
+SplitChannelXform::SplitChannelXform(const std::string& name) //
+        : RenderXform(name) //
         , texture_ids_{0, 0, 0, 0}//
 {
   add_input_port_descriptor("image", "image");
@@ -54,6 +60,10 @@ SplitChannelXform::SplitChannelXform() //
                                                    (const GLchar **) nullptr,
                                                    f_shader_source));
 }
+
+SplitChannelXform::SplitChannelXform() //
+        : SplitChannelXform(fmt::format("{}_{}", TYPE, next_idx_++)) //
+{}
 
 SplitChannelXform::~SplitChannelXform() {
   glDeleteTextures(4, texture_ids_);
@@ -90,7 +100,7 @@ SplitChannelXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &
 
   split_prog_->use();
   split_prog_->set1i("input_image", 0);
-  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
 
   end_render();
   /*

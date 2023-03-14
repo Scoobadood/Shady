@@ -1,27 +1,35 @@
 #include "save-file-xform.h"
 #include <spdlog/spdlog-inl.h>
+
+#include <utility>
 #include "xform-texture-meta.h"
 #include "image_io.h"
+
+uint32_t SaveFileXform::next_idx_ = 0;
+const std::string TYPE = "SaveFile";
+
+std::string SaveFileXform::type() const {
+  return TYPE;
+}
 
 void save_texture_to_file(const std::string &file_name,
                           const std::shared_ptr<TextureMetadata> &tx_data,
                           uint32_t &err,
                           std::string &err_msg);
 
-uint32_t SaveFileXform::next_idx_ = 0;
 
-SaveFileXform::~SaveFileXform() = default;
-
-SaveFileXform::SaveFileXform() //
-        : Xform("SaveFile_" + std::to_string(next_idx_++),
-                XformConfig{
-                        {
-                                {"file_name", XformConfig::PropertyDescriptor::STRING}}
-                }
-) //
+SaveFileXform::SaveFileXform(std::string name) //
+        : Xform(std::move(name) //
+        , XformConfig{
+                {{"file_name", XformConfig::PropertyDescriptor::STRING}}}) //
 {
   add_input_port_descriptor("image", "image", true);
 }
+
+SaveFileXform::SaveFileXform() :
+        SaveFileXform(fmt::format("{}_{}", TYPE, next_idx_++)) {}
+
+SaveFileXform::~SaveFileXform() = default;
 
 std::map<std::string, std::shared_ptr<void>>
 SaveFileXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs, uint32_t &err,
@@ -61,7 +69,7 @@ void save_texture_to_file(const std::string &file_name,
   auto x = save_png(file_name, tx_data->width, tx_data->height, buffer);
   delete[] buffer;
 
-  if( x == IO_OK) {
+  if (x == IO_OK) {
     err = XFORM_OK;
     err_msg = "OK";
   } else {

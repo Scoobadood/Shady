@@ -5,7 +5,7 @@
 
 class RenderXform : public Xform {
 public:
-  RenderXform(const std::string &name, XformConfig config);
+  explicit RenderXform(const std::string &name, XformConfig config = XformConfig{});
 
   ~RenderXform() override;
 

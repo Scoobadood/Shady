@@ -46,10 +46,21 @@ public:
    */
   XformConfig &config() { return config_; }
 
+
+  /**
+   * Get a mutable reference to the config.
+   */
+  const XformConfig &config() const { return config_; }
+
   /**
    * @return The unique name for this transform.
    */
   const std::string &name() const;
+
+  /**
+   * @return The type for this transform.
+   */
+  virtual std::string type() const = 0;
 
   /**
    * @return true if there are no outputs for this xform.

@@ -7,7 +7,11 @@ class SaveFileXform : public Xform {
 public:
   SaveFileXform();
 
+  explicit SaveFileXform(std::string name);
+
   ~SaveFileXform() override;
+
+  std::string type() const override;
 
 protected:
   static uint32_t next_idx_;
