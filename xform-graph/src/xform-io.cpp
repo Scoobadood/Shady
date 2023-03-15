@@ -106,30 +106,43 @@ std::shared_ptr<XformGraph> xform_read_graph(std::istream &is) {
 
   auto xforms = graph_json.at("xforms");
   for (auto &xf_j: xforms) {
+
+    std::shared_ptr<Xform> xform = nullptr;
+
     std::string name = xf_j.at("name");
     std::string type = xf_j.at("type");
-    auto cfg = xf_j.at("config");
 
-    std::vector<const XformConfig::PropertyDescriptor> pds;
-    for (auto &cf_j: cfg) {
-      std::string prop_name = cf_j.at("name");
-      auto prop_type = type_for_string(cf_j.at("type"));
-      pds.push_back({prop_name, prop_type});
-    }
-    XformConfig conf{pds};
-    std::map<std::string, std::string> config;
 
-    for (auto &cf_j: cfg) {
-      auto prop_name = cf_j.at("name");
-      std::string prop_value;
-      if (cf_j.at("value").is_number()) {
-        prop_value = to_string(cf_j.at("value"));
-      } else {
-        prop_value = cf_j.at("value");
+    /* Config may be present, in which case parse it, otherwise we
+     * assume an empty config
+     */
+    if (xf_j.contains("config")) {
+      auto cfg = xf_j.at("config");
+
+      std::vector<const XformConfig::PropertyDescriptor> pds;
+      for (auto &cf_j: cfg) {
+        std::string prop_name = cf_j.at("name");
+        auto prop_type = type_for_string(cf_j.at("type"));
+        pds.push_back({prop_name, prop_type});
       }
-      config.emplace(prop_name, prop_value);
+      XformConfig conf{pds};
+      std::map<std::string, std::string> config;
+
+      for (auto &cf_j: cfg) {
+        auto prop_name = cf_j.at("name");
+        std::string prop_value;
+        if (cf_j.at("value").is_number()) {
+          prop_value = to_string(cf_j.at("value"));
+        } else {
+          prop_value = cf_j.at("value");
+        }
+        config.emplace(prop_name, prop_value);
+      }
+      xform = XformFactory::make_xform(type, name, config);
+    } else {
+      // No config
+      xform = XformFactory::make_xform(type, name, {});
     }
-    auto xform = XformFactory::make_xform(type, name, config);
     graph->add_xform(xform);
   }
 
