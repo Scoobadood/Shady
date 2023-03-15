@@ -101,11 +101,10 @@ save_graph(const std::string &file_name, const std::shared_ptr<XformGraph> &grap
 std::shared_ptr<XformGraph> xform_read_graph(std::istream &is) {
   using json = nlohmann::json;
   json graph_json = json::parse(is);
-  auto xforms = graph_json.at("xforms");
-  auto connections = graph_json.at("connections");
 
   auto graph = std::make_shared<XformGraph>();
 
+  auto xforms = graph_json.at("xforms");
   for (auto &xf_j: xforms) {
     std::string name = xf_j.at("name");
     std::string type = xf_j.at("type");
@@ -132,6 +131,18 @@ std::shared_ptr<XformGraph> xform_read_graph(std::istream &is) {
     }
     auto xform = XformFactory::make_xform(type, name, config);
     graph->add_xform(xform);
+  }
+
+  auto connections = graph_json.at("connections");
+  for (auto con_j: connections) {
+    std::string fx = con_j.at("from_xform");
+    std::string fp = con_j.at("from_port");
+    std::string tx = con_j.at("to_xform");
+    std::string tp = con_j.at("to_port");
+    if (!graph->add_connection(fx, fp, tx, tp)) {
+      spdlog::error("load_graph() couldn't add connection from {}::{} to {}::{}", fx, fp, tx, tp);
+      return nullptr;
+    }
   }
 
   return graph;
