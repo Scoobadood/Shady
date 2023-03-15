@@ -1,4 +1,4 @@
-#include "load-file-xform.h"
+#include "xforms/load-file-xform.h"
 #include "image_io.h"
 #include "gl_utils.h"
 #include "xform-texture-meta.h"

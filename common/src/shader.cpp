@@ -1,7 +1,3 @@
-//
-// Created by Dave Durbin on 15/12/2022.
-//
-
 #include "shader.h"
 #include "glm/gtc/type_ptr.hpp"
 

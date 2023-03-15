@@ -5,19 +5,18 @@
 
 class RenderXform : public Xform {
 public:
-  explicit RenderXform(const std::string &name, XformConfig config = XformConfig{});
+  explicit RenderXform(const std::string &name, XformConfig config);
 
   ~RenderXform() override;
 
 protected:
-  void init_gl_resources();
-  virtual void do_init_fbo();
   void start_render() const;
   static void end_render();
 
 private:
+  virtual void do_init_fbo();
   void init_framebuffer();
-
+  void init_gl_resources();
 
   GLuint fbo_;
   GLuint vao_id_;

@@ -22,6 +22,7 @@ add_library(Xform SHARED
         src/xform-port.cpp include/xform-port.h
         src/render-xform.cpp include/render-xform.h
         src/xform-config.cpp include/xform-config.h
+        src/single-io-shader-xform.cpp include/single-io-shader-xform.h
 
         # Graph IO
         src/xform-io.cpp include/xform-io.h
@@ -29,10 +30,10 @@ add_library(Xform SHARED
 
         # Specific functions
         src/image_io.cpp include/image_io.h
-        src/load-file-xform.cpp include/load-file-xform.h
-        src/split-channel-xform.cpp include/split-channel-xform.h
-        src/save-file-xform.cpp include/save-file-xform.h
-
+        src/load-file-xform.cpp include/xforms/load-file-xform.h
+        src/split-channel-xform.cpp include/xforms/split-channel-xform.h
+        src/save-file-xform.cpp include/xforms/save-file-xform.h
+        src/brightness-xform.cpp include/xforms/brightness-xform.h
         )
 
 target_include_directories(Xform

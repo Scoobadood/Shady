@@ -1,4 +1,4 @@
-#include "split-channel-xform.h"
+#include "xforms/split-channel-xform.h"
 #include "xform-texture-meta.h"
 #include <spdlog/spdlog-inl.h>
 
@@ -43,9 +43,8 @@ std::string SplitChannelXform::type() const {
   return TYPE;
 }
 
-
 SplitChannelXform::SplitChannelXform(const std::string& name) //
-        : RenderXform(name) //
+        : RenderXform(name,XformConfig{{}}) //
         , texture_ids_{0, 0, 0, 0}//
 {
   add_input_port_descriptor("image", "image");
@@ -53,8 +52,6 @@ SplitChannelXform::SplitChannelXform(const std::string& name) //
   add_output_port_descriptor("green", "image");
   add_output_port_descriptor("blue", "image");
   add_output_port_descriptor("alpha", "image");
-
-  init_gl_resources();
 
   split_prog_ = std::unique_ptr<Shader>(new Shader(v_shader_source,
                                                    (const GLchar **) nullptr,
