@@ -4,10 +4,21 @@
 
 #include <spdlog/spdlog-inl.h>
 
+#include <utility>
+
 SingleIOShaderXform::SingleIOShaderXform(const std::string &name, XformConfig config) //
-        : RenderXform{name, config} //
+        : RenderXform{name, std::move(config)} //
+        , texture_id_{0} //
         , shader_{nullptr} //
-{}
+{
+  add_input_port_descriptor("image","image",true);
+  add_output_port_descriptor("image","image");
+}
+
+void SingleIOShaderXform::init() {
+  RenderXform::init();
+  init_shader();
+}
 
 SingleIOShaderXform::~SingleIOShaderXform() {
   glDeleteTextures(1, &texture_id_);
@@ -25,10 +36,6 @@ void SingleIOShaderXform::do_init_fbo() {
 std::map<std::string, std::shared_ptr<void>>
 SingleIOShaderXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,
                             uint32_t &err, std::string &err_msg) {
-  if( !shader_) {
-    init_shader(err, err_msg);
-  }
-
   /* Extract inputs */
   auto it = inputs.find("image");
   if (it == inputs.end()) {

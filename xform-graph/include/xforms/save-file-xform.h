@@ -14,6 +14,8 @@ public:
 
   std::string type() const override;
 
+  void init() override;
+
 private:
   static uint32_t next_idx_;
   std::map<std::string, std::shared_ptr<void>>

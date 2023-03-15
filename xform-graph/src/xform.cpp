@@ -9,6 +9,7 @@ Xform::Xform(std::string name, XformConfig config) //
         : name_{std::move(name)} //
 {
   config_ = std::move(config);
+  is_init_ = false;
 }
 
 std::shared_ptr<const InputPortDescriptor>
@@ -94,6 +95,12 @@ const std::string &Xform::name() const {
  */
 std::map<std::string, std::shared_ptr<void>>
 Xform::apply(const std::map<std::string, std::shared_ptr<void>> &inputs, uint32_t &err, std::string &err_msg) {
+  if( !is_init_) {
+    err = XFORM_NOT_INITED;
+    err_msg = fmt::format("Xform {} is not initialised", name_);
+    return {};
+  }
+
   for (const auto &ipd: input_port_descriptors_) {
     auto it = inputs.find(ipd.first);
     if (ipd.second->is_required() && it == inputs.end()) {

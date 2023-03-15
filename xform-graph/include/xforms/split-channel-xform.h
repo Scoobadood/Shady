@@ -35,6 +35,8 @@ public:
 
   std::string type() const override;
 
+  void init() override;
+
 private:
   static uint32_t next_idx_;
   GLuint texture_ids_[4]; // R G B A

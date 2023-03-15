@@ -14,6 +14,11 @@ public:
 
   std::string type() const override;
 
+  /**
+   * Virtual initialisation; MUST be called before object can be used.
+   */
+  void init() override;
+
 private:
   static uint32_t next_idx_;
 

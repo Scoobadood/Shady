@@ -12,16 +12,19 @@ class BrightnessXform : public SingleIOShaderXform {
 public:
   explicit BrightnessXform(const std::string &name);
 
-  ~BrightnessXform();
+  ~BrightnessXform() override;
 
   std::string type() const override;
+
+  void init() override;
+
 
 private:
   static uint32_t next_idx_;
 
-  virtual void init_shader(uint32_t &err, std::string &err_msg) override;
+  void init_shader() override;
 
-  virtual void bind_shader_variables(std::shared_ptr<Shader> shader) override;
+  void bind_shader_variables(std::shared_ptr<Shader> shader) override;
 };
 
 REGISTER_CLASS(BrightnessXform)

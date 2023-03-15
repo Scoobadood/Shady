@@ -1,8 +1,8 @@
 
 #include "xform-graph.h"
-#include "load-file-xform.h"
-#include "split-channel-xform.h"
-#include "save-file-xform.h"
+#include "xforms/load-file-xform.h"
+#include "xforms/split-channel-xform.h"
+#include "xforms/save-file-xform.h"
 
 
 XformGraph build_graph() {

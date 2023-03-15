@@ -17,13 +17,21 @@ void save_texture_to_file(const std::string &file_name,
                           uint32_t &err,
                           std::string &err_msg);
 
+namespace {
+  const std::vector<const XformConfig::PropertyDescriptor> SAVE_FILE_PROPERTIES
+          {{"file_name", XformConfig::PropertyDescriptor::STRING}};
+
+}
 
 SaveFileXform::SaveFileXform(std::string name) //
         : Xform(std::move(name) //
-        , XformConfig{
-                {{"file_name", XformConfig::PropertyDescriptor::STRING}}}) //
+        , XformConfig{SAVE_FILE_PROPERTIES}) //
 {
   add_input_port_descriptor("image", "image", true);
+}
+
+void SaveFileXform::init() {
+  is_init_ = true;
 }
 
 SaveFileXform::SaveFileXform() :

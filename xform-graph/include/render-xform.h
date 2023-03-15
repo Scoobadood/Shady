@@ -9,13 +9,21 @@ public:
 
   ~RenderXform() override;
 
+  /**
+   * Virtual initialisation; MUST be called before object can be used.
+   */
+  void init() override = 0;
+
 protected:
   void start_render() const;
+
   static void end_render();
 
 private:
-  virtual void do_init_fbo();
+  virtual void do_init_fbo() = 0;
+
   void init_framebuffer();
+
   void init_gl_resources();
 
   GLuint fbo_;

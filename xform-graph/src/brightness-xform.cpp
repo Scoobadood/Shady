@@ -48,10 +48,15 @@ BrightnessXform::BrightnessXform(const std::string &name) //
 
 BrightnessXform::~BrightnessXform() = default;
 
-void BrightnessXform::init_shader(uint32_t &err, std::string &err_msg) {
-  std::make_shared<Shader>(v_shader_source,
-                           nullptr,
-                           f_shader_source);
+void BrightnessXform::init_shader() {
+  shader_ = std::make_shared<Shader>(v_shader_source,
+                                     nullptr,
+                                     f_shader_source);
+}
+
+void BrightnessXform::init() {
+  SingleIOShaderXform::init();
+  is_init_ = (shader_ != nullptr);
 }
 
 void BrightnessXform::bind_shader_variables(std::shared_ptr<Shader> shader) {

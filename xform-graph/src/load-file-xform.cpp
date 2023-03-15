@@ -15,14 +15,32 @@ std::string LoadFileXform::type() const {
   return TYPE;
 }
 
+namespace {
+  const std::vector<const XformConfig::PropertyDescriptor> LOAD_FILE_PROPERTIES
+          {{"file_name", XformConfig::PropertyDescriptor::STRING}};
+
+}
+
 LoadFileXform::LoadFileXform(const std::string &name) //
         : Xform(name  //
-        , XformConfig({{"file_name", XformConfig::PropertyDescriptor::STRING}})) //
+        , XformConfig(LOAD_FILE_PROPERTIES)) //
 {
   image_tx_ = 0;
   add_output_port_descriptor("image", "image");
   allocate_textures(1, &image_tx_);
 }
+
+void LoadFileXform::init() {
+  is_init_ = true;
+}
+
+
+/**
+ * Virtual initialisation; MUST be called before object can be used.
+ */
+void init() {
+}
+
 
 LoadFileXform::LoadFileXform()
         : LoadFileXform(fmt::format("{}_{}", TYPE, next_idx_++)) {}

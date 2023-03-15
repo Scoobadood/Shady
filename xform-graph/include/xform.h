@@ -27,9 +27,15 @@ const uint32_t XFORM_MISSING_INPUT = 3;
 const uint32_t XFORM_INPUT_NOT_SET = 4;
 const uint32_t XFORM_FILE_READ_FAILED = 5;
 const uint32_t XFORM_FILE_SAVE_FAILED = 6;
+const uint32_t XFORM_NOT_INITED = 7;
 
 class Xform {
 public:
+  /**
+   * Virtual initialisation; MUST be called before object can be used.
+   */
+   virtual void init() = 0;
+
   /**
    * Apply the transform to its inputs and make the result
    * available to outputs.
@@ -120,6 +126,8 @@ protected:
 
   std::map<std::string, std::shared_ptr<const InputPortDescriptor>> input_port_descriptors_;
   std::map<std::string, std::shared_ptr<const OutputPortDescriptor>> output_port_descriptors_;
+
+  bool is_init_;
 
 private:
   virtual std::map<std::string, std::shared_ptr<void>>

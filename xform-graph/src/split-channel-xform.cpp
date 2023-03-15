@@ -53,10 +53,16 @@ SplitChannelXform::SplitChannelXform(const std::string& name) //
   add_output_port_descriptor("blue", "image");
   add_output_port_descriptor("alpha", "image");
 
+}
+
+void SplitChannelXform::init() {
+  RenderXform::init();
   split_prog_ = std::unique_ptr<Shader>(new Shader(v_shader_source,
                                                    (const GLchar **) nullptr,
                                                    f_shader_source));
+  if( split_prog_) is_init_ = true;
 }
+
 
 SplitChannelXform::SplitChannelXform() //
         : SplitChannelXform(fmt::format("{}_{}", TYPE, next_idx_++)) //

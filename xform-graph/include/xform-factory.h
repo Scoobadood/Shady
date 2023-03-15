@@ -28,7 +28,9 @@ private:
 
 #define REGISTER_CLASS(cls)                                   \
 std::shared_ptr<cls> create_##cls(const std::string& name) {  \
-  return std::make_shared<cls>(name);                         \
+  auto c = std::make_shared<cls>(name);                       \
+  c->init();                                                  \
+  return c;                                                   \
 }                                                             \
 struct Register##cls {                                        \
   explicit Register##cls(const std::string& name) {           \

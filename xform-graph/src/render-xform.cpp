@@ -12,6 +12,9 @@ RenderXform::RenderXform(const std::string &name, XformConfig config) //
         , vbo_verts_{0}//
         , vbo_indices_{0}//
 {
+}
+
+void RenderXform::init() {
   init_gl_resources();
 }
 
@@ -74,8 +77,4 @@ void RenderXform::start_render() const{
 
 void RenderXform::end_render(){
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void RenderXform::do_init_fbo(){
-  spdlog::warn("do_init_fbo() is not implemented");
 }
