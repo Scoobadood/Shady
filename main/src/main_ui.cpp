@@ -1,4 +1,5 @@
-#include "graph.h"
+#include "xform-io.h"
+#include "xform-graph.h"
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
@@ -42,8 +43,8 @@ int main() {
 
   initImGui(window);
 
-  auto graph = build_graph();
-  graph.evaluate();
+  auto graph = load_graph("/Users/dave/CLionProjects/image_toys/data/sample_graph.json");
+  graph->evaluate();
 
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
@@ -63,7 +64,7 @@ int main() {
     std::map<std::pair<std::string, std::string>, ImVec2> out_port_coords;
 
     // For each node, make a box and add a name to it.
-    for (const auto &xform: graph.xforms()) {
+    for (const auto &xform: graph->xforms()) {
       ImGui::Begin(xform->name().c_str(), nullptr,
                    ImGuiWindowFlags_NoResize |
                    ImGuiWindowFlags_NoCollapse
@@ -75,7 +76,7 @@ int main() {
        */
       auto num_inputs = xform->input_port_descriptors().size();
       ImVec2 window_size = ImGui::GetWindowSize();
-      auto spacing = window_size.y / (num_inputs + 1);
+      auto spacing = window_size.y / (float)(num_inputs + 1);
       ImVec2 window_pos = ImGui::GetWindowPos();
       ImVec2 port_pos = {window_pos.x, window_pos.y + spacing};
       for (const auto &ipd: xform->input_port_descriptors()) {
@@ -95,7 +96,7 @@ int main() {
        * Render outputs
        */
       auto num_outputs = xform->output_port_descriptors().size();
-      spacing = window_size.y / (num_outputs + 1);
+      spacing = window_size.y / (float)(num_outputs + 1);
       port_pos = {window_pos.x + window_size.x, window_pos.y + spacing};
       for (const auto &opd: xform->output_port_descriptors()) {
         ImGui::GetForegroundDrawList()->AddCircleFilled(port_pos,
@@ -115,7 +116,7 @@ int main() {
     /**
      * Render connections
      */
-    for (const auto &conn: graph.connections()) {
+    for (const auto &conn: graph->connections()) {
       ImVec2 from = out_port_coords.at(conn.first);
       ImVec2 to = in_port_coords.at(conn.second);
       auto midX = from.x + (to.x - from.x) / 2.0f;
