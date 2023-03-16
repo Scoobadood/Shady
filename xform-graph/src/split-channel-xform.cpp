@@ -28,10 +28,10 @@ smooth in vec2 uv_tex_coord;
 uniform sampler2D input_image;
 
 void main() {
-  fragColor[0] = vec4(texture( input_image, uv_tex_coord ).r);
-  fragColor[1] = vec4(texture( input_image, uv_tex_coord ).g);
-  fragColor[2] = vec4(texture( input_image, uv_tex_coord ).b);
-  fragColor[3] = vec4(texture( input_image, uv_tex_coord ).a);
+  fragColor[0] = vec4(vec3(texture( input_image, uv_tex_coord ).r),1.);
+  fragColor[1] = vec4(vec3(texture( input_image, uv_tex_coord ).g),1.);
+  fragColor[2] = vec4(vec3(texture( input_image, uv_tex_coord ).b),1.);
+  fragColor[3] = vec4(vec3(texture( input_image, uv_tex_coord ).a),1.);
 }
 )"};
 
@@ -43,8 +43,8 @@ std::string SplitChannelXform::type() const {
   return TYPE;
 }
 
-SplitChannelXform::SplitChannelXform(const std::string& name) //
-        : RenderXform(name,XformConfig{{}}) //
+SplitChannelXform::SplitChannelXform(const std::string &name) //
+        : RenderXform(name, XformConfig{{}}) //
         , texture_ids_{0, 0, 0, 0}//
 {
   add_input_port_descriptor("image", "image");
@@ -60,7 +60,7 @@ void SplitChannelXform::init() {
   split_prog_ = std::unique_ptr<Shader>(new Shader(v_shader_source,
                                                    (const GLchar **) nullptr,
                                                    f_shader_source));
-  if( split_prog_) is_init_ = true;
+  if (split_prog_) is_init_ = true;
 }
 
 
@@ -69,7 +69,7 @@ SplitChannelXform::SplitChannelXform() //
 {}
 
 SplitChannelXform::~SplitChannelXform() {
-  glDeleteTextures(4, texture_ids_);
+  glDeleteTextures(num_textures_, texture_ids_);
 }
 
 std::map<std::string, std::shared_ptr<void>>
@@ -90,7 +90,7 @@ SplitChannelXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &
     return {};
   }
 
-  resize_textures(4, texture_ids_, img->width, img->height);
+  resize_textures(texture_ids_, img->width, img->height);
 
   /*
    * Render
@@ -130,7 +130,8 @@ SplitChannelXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &
 
 void
 SplitChannelXform::do_init_fbo() {
-  allocate_textures(4, texture_ids_);
+  num_textures_ = 4;
+  allocate_textures(texture_ids_);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                          GL_TEXTURE_2D, texture_ids_[0], 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
@@ -139,6 +140,4 @@ SplitChannelXform::do_init_fbo() {
                          GL_TEXTURE_2D, texture_ids_[2], 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3,
                          GL_TEXTURE_2D, texture_ids_[3], 0);
-  GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
-  glDrawBuffers(4, drawBuffers);
 }

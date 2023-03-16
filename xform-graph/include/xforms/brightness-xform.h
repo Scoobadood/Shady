@@ -24,7 +24,7 @@ private:
 
   void init_shader() override;
 
-  void bind_shader_variables(std::shared_ptr<Shader> shader) override;
+  void bind_shader_variables() override;
 };
 
 REGISTER_CLASS(BrightnessXform)

@@ -5,6 +5,7 @@
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
+#include <spdlog/cfg/env.h>
 
 GLFWwindow *initgl() {
   glfwInit();
@@ -39,6 +40,8 @@ void initImGui(GLFWwindow *window) {
 }
 
 int main() {
+  spdlog::cfg::load_env_levels();
+
   auto window = initgl();
 
   initImGui(window);

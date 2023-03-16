@@ -1,5 +1,5 @@
 #include "xforms/brightness-xform.h"
-
+#include <spdlog/spdlog-inl.h>
 
 namespace {
   const GLchar *v_shader_source[] = {R"(
@@ -10,19 +10,18 @@ smooth out vec2 uv_tex_coord;
 void main() {
   gl_Position = vec4(vtx_coord,0,1);
   uv_tex_coord = vtx_tex_coord;
-})"
-  };
+})"};
 
   const GLchar *f_shader_source[] = {R"(
 #version 410 core
-layout (location=0) out vec4 fragColor[4];
+layout (location=0) out vec4 fragColor;
 smooth in vec2 uv_tex_coord;
-uniform sampler2D input_image;
 uniform float brightness;
+uniform sampler2D input_image;
 
 void main() {
-  vec4 src = texture( input_image, uv_tex_coord );
-  fragColor[0] = vec4(src.rgb * brightness, src.a);
+  vec3 col = uv_tex_coord.x < 0.5 ? texture(input_image, uv_tex_coord).rgb : vec3(0.5) * brightness;
+  fragColor=vec4( col, 1.);
 }
 )"};
 }
@@ -49,21 +48,30 @@ BrightnessXform::BrightnessXform(const std::string &name) //
 BrightnessXform::~BrightnessXform() = default;
 
 void BrightnessXform::init_shader() {
-  shader_ = std::make_shared<Shader>(v_shader_source,
-                                     nullptr,
-                                     f_shader_source);
+  spdlog::debug("Brightness::init_shader()");
+
+  shader_ = std::unique_ptr<Shader>(new Shader(v_shader_source,
+                                       nullptr,
+                                       f_shader_source));
 }
 
 void BrightnessXform::init() {
+  spdlog::debug("Brightness::init()");
   SingleIOShaderXform::init();
   is_init_ = (shader_ != nullptr);
 }
 
-void BrightnessXform::bind_shader_variables(std::shared_ptr<Shader> shader) {
+void BrightnessXform::bind_shader_variables() {
+  spdlog::debug("Brightness::bind_shader_variables()");
+
   int br;
   config().get("brightness", br);
   br = std::min(100, std::max(br, -100));
-  //-100 -> 0.5, 100 = 2.0, 0 -> 0
-  float fbr = (br < 0) ? ((float) br / -200) : ((float) br / 50);
-  shader->set1f("brightness", fbr);
+  //-100 -> 0.5, 0 -> 1.0, 100 = 2.0
+  float fbr;
+  if (br < 0) fbr = (float) br / -200.0f;
+  else if (br > 0) fbr = (float) br / 50.0f;
+  else fbr = 1.0f;
+
+  shader_->set1f("brightness", fbr);
 }

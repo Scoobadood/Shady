@@ -27,12 +27,12 @@ public:
 
 protected:
   void do_init_fbo() override;
-  std::shared_ptr<Shader> shader_;
+  std::unique_ptr<Shader> shader_;
 
 private:
   virtual void init_shader() = 0;
 
-  virtual void bind_shader_variables(std::shared_ptr<Shader> shader) = 0;
+  virtual void bind_shader_variables() = 0;
 
   std::map<std::string, std::shared_ptr<void>>
   do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs, uint32_t &err, std::string &err_msg) override;

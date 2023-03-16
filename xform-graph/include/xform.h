@@ -34,7 +34,7 @@ public:
   /**
    * Virtual initialisation; MUST be called before object can be used.
    */
-   virtual void init() = 0;
+  virtual void init() = 0;
 
   /**
    * Apply the transform to its inputs and make the result
@@ -116,9 +116,9 @@ protected:
 
   virtual ~Xform() = default;
 
-  static void allocate_textures(int32_t n, GLuint *texture_ids);
+  void allocate_textures(GLuint *texture_ids) const;
 
-  static void resize_textures(uint32_t n, GLuint *texture_ids, GLsizei width, GLsizei height);
+  void resize_textures(GLuint *texture_ids, GLsizei width, GLsizei height) const;
 
   void add_input_port_descriptor(const std::string &name, const std::string &type, bool is_required = true);
 
@@ -128,6 +128,8 @@ protected:
   std::map<std::string, std::shared_ptr<const OutputPortDescriptor>> output_port_descriptors_;
 
   bool is_init_;
+
+  int32_t num_textures_;
 
 private:
   virtual std::map<std::string, std::shared_ptr<void>>

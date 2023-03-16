@@ -27,18 +27,12 @@ LoadFileXform::LoadFileXform(const std::string &name) //
 {
   image_tx_ = 0;
   add_output_port_descriptor("image", "image");
-  allocate_textures(1, &image_tx_);
+  num_textures_ = 1;
+  allocate_textures(&image_tx_);
 }
 
 void LoadFileXform::init() {
   is_init_ = true;
-}
-
-
-/**
- * Virtual initialisation; MUST be called before object can be used.
- */
-void init() {
 }
 
 
@@ -47,7 +41,7 @@ LoadFileXform::LoadFileXform()
 
 
 LoadFileXform::~LoadFileXform() {
-  glDeleteTextures(1, &image_tx_);
+  glDeleteTextures(num_textures_, &image_tx_);
 }
 
 std::map<std::string, std::shared_ptr<void>>

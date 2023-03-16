@@ -15,6 +15,7 @@ RenderXform::RenderXform(const std::string &name, XformConfig config) //
 }
 
 void RenderXform::init() {
+  spdlog::debug("RenderXform::init");
   init_gl_resources();
 }
 
@@ -26,6 +27,8 @@ RenderXform::~RenderXform() {
 }
 
 void init_buffers(GLuint &vao_id, GLuint &vbo_verts, GLuint &vbo_indices) {
+  spdlog::debug("RenderXform::init_buffers()");
+
   float vertex_data[4 * 4] = {-1.0, -1.0, 0, 0,
                               1.0, -1.0, 1, 0,
                               1.0, 1.0, 1, 1,
@@ -52,6 +55,7 @@ void init_buffers(GLuint &vao_id, GLuint &vbo_verts, GLuint &vbo_indices) {
 
 
 void RenderXform::init_framebuffer() {
+  spdlog::debug("RenderXform::init_framebuffer()");
   glGenFramebuffers(1, &fbo_);
   glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
 
@@ -65,16 +69,25 @@ void RenderXform::init_framebuffer() {
 }
 
 void RenderXform::init_gl_resources() {
+  spdlog::debug("RenderXform::init_gl_resources()");
   init_framebuffer();
   init_buffers(vao_id_, vbo_verts_, vbo_indices_);
   gl_check_error_and_halt("init_gl_resources()");
 }
 
 void RenderXform::start_render() const{
+  spdlog::debug("RenderXform::start_render()");
+
   glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
+
+  GLenum drawBuffers[num_textures_];
+  for( GLenum i=0; i< num_textures_; ++i) drawBuffers[i] = GL_COLOR_ATTACHMENT0+i;
+  glDrawBuffers(num_textures_, drawBuffers);
+
   glBindVertexArray(vao_id_);
 }
 
 void RenderXform::end_render(){
+  spdlog::debug("RenderXform::end_render()");
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

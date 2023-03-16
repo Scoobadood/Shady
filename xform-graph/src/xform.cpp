@@ -115,9 +115,9 @@ Xform::apply(const std::map<std::string, std::shared_ptr<void>> &inputs, uint32_
 }
 
 void
-Xform::allocate_textures(int32_t n, GLuint *texture_ids) {
-  glGenTextures(n, texture_ids);
-  for (auto i = 0; i < n; ++i) {
+Xform::allocate_textures(GLuint *texture_ids) const {
+  glGenTextures(num_textures_, texture_ids);
+  for (auto i = 0; i < num_textures_; ++i) {
     if (texture_ids[i] == 0) {
       spdlog::error("Xfrom allocate_textures() got invalid texture ID");
       return;
@@ -125,7 +125,7 @@ Xform::allocate_textures(int32_t n, GLuint *texture_ids) {
   }
 
   glActiveTexture(GL_TEXTURE0);
-  for (auto i = 0; i < n; ++i) {
+  for (auto i = 0; i < num_textures_; ++i) {
     glBindTexture(GL_TEXTURE_2D, texture_ids[i]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -140,9 +140,9 @@ Xform::allocate_textures(int32_t n, GLuint *texture_ids) {
 }
 
 void
-Xform::resize_textures(uint32_t n, GLuint *texture_ids, GLsizei width, GLsizei height) {
+Xform::resize_textures(GLuint *texture_ids, GLsizei width, GLsizei height) const {
   glActiveTexture(GL_TEXTURE0);
-  for (auto i = 0; i < n; ++i) {
+  for (auto i = 0; i < num_textures_; ++i) {
     glBindTexture(GL_TEXTURE_2D, texture_ids[i]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                  width, height, 0,
