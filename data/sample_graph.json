@@ -7,7 +7,7 @@
         {
           "name": "file_name",
           "type": "STRING",
-          "value": "/Users/dave/CLionProjects/image_toys/data/parrot.png"
+          "value": "/Users/dave/CLionProjects/image_toys/data/rgb.png"
         }
       ]
     },
@@ -18,12 +18,12 @@
         {
           "name": "file_name",
           "type": "STRING",
-          "value": "/Users/dave/CLionProjects/image_toys/data/parrot_bright.png"
+          "value": "/Users/dave/CLionProjects/image_toys/data/rgb_red.png"
         }
       ]
     },
     {
-      "name": "Brighten",
+      "name": "Brightness",
       "type": "BrightnessXform",
       "config": [
         {
@@ -38,11 +38,11 @@
     {
       "from_xform": "Load",
       "from_port": "image",
-      "to_xform": "Brighten",
+      "to_xform": "Brightness",
       "to_port": "image"
     },
     {
-      "from_xform": "Brighten",
+      "from_xform": "Brightness",
       "from_port": "image",
       "to_xform": "Save",
       "to_port": "image"

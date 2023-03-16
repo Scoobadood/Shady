@@ -23,27 +23,20 @@
       ]
     },
     {
-      "name": "Brightness",
-      "type": "BrightnessXform",
-      "config": [
-        {
-          "name": "brightness",
-          "type": "INT",
-          "value": 50
-        }
-      ]
+      "name": "Split",
+      "type": "SplitChannelXform"
     }
   ],
   "connections": [
     {
       "from_xform": "Load",
       "from_port": "image",
-      "to_xform": "Brightness",
+      "to_xform": "Split",
       "to_port": "image"
     },
     {
-      "from_xform": "Brightness",
-      "from_port": "image",
+      "from_xform": "Split",
+      "from_port": "red",
       "to_xform": "Save",
       "to_port": "image"
     }
