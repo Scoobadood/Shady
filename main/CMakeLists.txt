@@ -19,7 +19,6 @@ add_definitions(-DGL_SILENCE_DEPRECATION)
 # Command line tool. Still requires GLFW to establish OpenGL context
 add_executable(shady_cli
         src/main_cli.cpp
-        include/graph.h src/graph.cpp
 )
 
 target_include_directories(shady_cli
@@ -44,7 +43,6 @@ SET(IMGUI_SOURCES ${imgui_SOURCE_DIR}/imgui.cpp ${imgui_SOURCE_DIR}/imgui_demo.c
 
 add_executable(shady
         src/main_ui.cpp
-        include/graph.h src/graph.cpp
         ${IMGUI_SOURCES}
         )
 

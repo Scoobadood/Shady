@@ -1,6 +1,6 @@
-#include "graph.h"
-
 #include <GLFW/glfw3.h>
+#include "xform-io.h"
+#include <OpenGL/gl3.h>
 
 GLFWwindow *initgl(){
   glfwInit();
@@ -23,9 +23,8 @@ int main( ) {
 
   using namespace std;
 
-  auto g = build_graph();
-
-  g.evaluate();
+  auto graph = load_graph("/Users/dave/CLionProjects/image_toys/data/sample_graph.json");
+  graph->evaluate();
 
   glfwDestroyWindow(win);
   glfwTerminate();
