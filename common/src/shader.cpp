@@ -93,28 +93,40 @@ void Shader::use() const {
   spdlog::critical("Shader is not ready to run");
 }
 
+inline GLint getUniformLocWithLogging(const char * type, GLuint prog_id, const char * name) {
+  auto loc =glGetUniformLocation(prog_id, name);
+  if( loc == -1 ) spdlog::error("Couldn't find uniform {}:{}", name, type);
+  return loc;
+}
+
 void Shader::setVec3(const std::string &name, const glm::vec3 &vec) const {
-  glUniformMatrix3fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(vec));
+  auto loc = getUniformLocWithLogging("vec3", ID, name.c_str());
+  glUniformMatrix3fv(loc, 1, GL_FALSE, glm::value_ptr(vec));
 }
 
 void Shader::setMat4(const std::string &name, const glm::mat4 &mat) const {
-  glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(mat));
+  auto loc = getUniformLocWithLogging("matrix4fv", ID, name.c_str());
+  glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(mat));
 }
 
 void Shader::set1f(const std::string &name, GLfloat v0) const {
-  glUniform1f(glGetUniformLocation(ID, name.c_str()), v0);
+  auto loc = getUniformLocWithLogging("1f", ID, name.c_str());
+  glUniform1f(loc, v0);
 }
 
 void Shader::set1i(const std::string &name, GLint v0) const {
-  glUniform1i(glGetUniformLocation(ID, name.c_str()), v0);
+  auto loc = getUniformLocWithLogging("1i", ID, name.c_str());
+  glUniform1i(loc, v0);
 }
 
 void Shader::set2ui(const std::string &name, GLuint v0, GLuint v1) const {
-  glUniform2ui(glGetUniformLocation(ID, name.c_str()), v0, v1);
+  auto loc = getUniformLocWithLogging("2ui", ID, name.c_str());
+  glUniform2ui(loc, v0, v1);
 }
 
 void Shader::set3f(const std::string &name, GLfloat v0, GLfloat v1, GLfloat v2) const {
-  glUniform3f(glGetUniformLocation(ID, name.c_str()), v0, v1, v2);
+  auto loc = getUniformLocWithLogging("3f", ID, name.c_str());
+  glUniform3f(loc, v0, v1, v2);
 }
 
 
