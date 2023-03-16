@@ -1,6 +1,7 @@
 #include <GLFW/glfw3.h>
 #include "xform-io.h"
 #include <OpenGL/gl3.h>
+#include <spdlog/spdlog-inl.h>
 
 GLFWwindow *initgl(){
   glfwInit();
@@ -18,14 +19,19 @@ GLFWwindow *initgl(){
 }
 
 
-int main( ) {
+int main( int argc, const char * argv[]) {
   auto win = initgl();
 
   using namespace std;
 
-  auto graph = load_graph("/Users/dave/CLionProjects/image_toys/data/sample_graph.json");
+  if( argc != 2 ) {
+    spdlog::info("Nothing to do");
+    return EXIT_FAILURE;
+  }
+  auto graph = load_graph(argv[1]);
   graph->evaluate();
 
   glfwDestroyWindow(win);
   glfwTerminate();
+  return EXIT_SUCCESS;
 }
