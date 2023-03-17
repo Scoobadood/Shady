@@ -69,28 +69,20 @@ SplitChannelXform::SplitChannelXform() //
 {}
 
 SplitChannelXform::~SplitChannelXform() {
-  glDeleteTextures(num_textures_, texture_ids_);
+  glDeleteTextures(4, texture_ids_);
 }
 
 std::map<std::string, std::shared_ptr<void>>
 SplitChannelXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,
                             uint32_t &err, std::string &err_msg) {
-  /* Extract inputs */
-  auto it = inputs.find("image");
-  if (it == inputs.end()) {
-    err = XFORM_MISSING_INPUT;
-    err_msg = fmt::format("Missing 'image'");
-    return {};
-  }
-
-  auto img = std::static_pointer_cast<TextureMetadata>(it->second);
+  auto img = std::static_pointer_cast<TextureMetadata>(inputs.at("image"));
   if (!img) {
     err = XFORM_INPUT_NOT_SET;
     err_msg = fmt::format("'image' is null");
     return {};
   }
 
-  resize_textures(texture_ids_, img->width, img->height);
+  resize_textures(4, texture_ids_, img->width, img->height);
 
   /*
    * Render
@@ -101,6 +93,8 @@ SplitChannelXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &
   glClearColor(0, 0, 0, 1.);
   glClear(GL_COLOR_BUFFER_BIT);
 
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, img->texture_id);
   split_prog_->use();
   split_prog_->set1i("input_image", 0);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
@@ -109,8 +103,6 @@ SplitChannelXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &
   /*
    * End of Render
    */
-
-  spdlog::info("Split");
 
   std::shared_ptr<void> out[4];
   for (auto i = 0; i < 4; ++i) {
@@ -129,9 +121,9 @@ SplitChannelXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &
 }
 
 void
-SplitChannelXform::do_init_fbo() {
-  num_textures_ = 4;
-  allocate_textures(texture_ids_);
+SplitChannelXform::configure_framebuffer() {
+  allocate_textures(4, texture_ids_);
+
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                          GL_TEXTURE_2D, texture_ids_[0], 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
@@ -140,4 +132,6 @@ SplitChannelXform::do_init_fbo() {
                          GL_TEXTURE_2D, texture_ids_[2], 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3,
                          GL_TEXTURE_2D, texture_ids_[3], 0);
+  GLenum buffs[]{GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
+  glDrawBuffers(4, buffs);
 }

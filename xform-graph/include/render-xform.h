@@ -12,7 +12,7 @@ public:
   /**
    * Virtual initialisation; MUST be called before object can be used.
    */
-  void init() override = 0;
+  void init() override;
 
 protected:
   void start_render() const;
@@ -20,9 +20,13 @@ protected:
   static void end_render();
 
 private:
-  virtual void do_init_fbo() = 0;
-
   void init_framebuffer();
+
+  /* Subclasses should implement to
+   * - allocated and bind textures, depths maps etc.
+   * - set up drawBuffers
+   */
+  virtual void configure_framebuffer() = 0;
 
   void init_gl_resources();
 

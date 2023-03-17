@@ -41,7 +41,7 @@ private:
   static uint32_t next_idx_;
   GLuint texture_ids_[4]; // R G B A
 
-  void do_init_fbo() override;
+  void configure_framebuffer() override;
 
   std::map<std::string, std::shared_ptr<void>>
   do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,

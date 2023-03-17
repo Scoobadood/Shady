@@ -27,11 +27,10 @@ LoadFileXform::LoadFileXform(const std::string &name) //
 {
   image_tx_ = 0;
   add_output_port_descriptor("image", "image");
-  num_textures_ = 1;
-  allocate_textures(&image_tx_);
 }
 
 void LoadFileXform::init() {
+  allocate_textures(1, &image_tx_);
   is_init_ = true;
 }
 
@@ -41,7 +40,7 @@ LoadFileXform::LoadFileXform()
 
 
 LoadFileXform::~LoadFileXform() {
-  glDeleteTextures(num_textures_, &image_tx_);
+  glDeleteTextures(1, &image_tx_);
 }
 
 std::map<std::string, std::shared_ptr<void>>
@@ -65,6 +64,8 @@ LoadFileXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &inpu
   }
 
   // load file to texture
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, image_tx_);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                width, height, 0,
                GL_RGB, GL_UNSIGNED_BYTE,

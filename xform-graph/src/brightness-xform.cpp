@@ -20,7 +20,7 @@ uniform float brightness;
 uniform sampler2D input_image;
 
 void main() {
-  vec3 col = uv_tex_coord.x < 0.5 ? texture(input_image, uv_tex_coord).rgb : vec3(0.5) * brightness;
+  vec3 col = texture(input_image, uv_tex_coord).rgb * brightness;
   fragColor=vec4( col, 1.);
 }
 )"};
@@ -42,6 +42,12 @@ BrightnessXform::BrightnessXform(const std::string &name) //
         : SingleIOShaderXform(name  //
         , XformConfig(BRIGHTNESS_PROPERTIES)) //
 {
+  config().set("brightness", 100);
+}
+
+BrightnessXform::BrightnessXform() //
+        : BrightnessXform(fmt::format("{}_{}", TYPE, next_idx_++))  //
+{
   config().set("brightness", 0);
 }
 
@@ -51,8 +57,8 @@ void BrightnessXform::init_shader() {
   spdlog::debug("Brightness::init_shader()");
 
   shader_ = std::unique_ptr<Shader>(new Shader(v_shader_source,
-                                       nullptr,
-                                       f_shader_source));
+                                               nullptr,
+                                               f_shader_source));
 }
 
 void BrightnessXform::init() {
@@ -61,13 +67,20 @@ void BrightnessXform::init() {
   is_init_ = (shader_ != nullptr);
 }
 
+/*
+ * Input values are in the range (-100, 100)
+ * and map to a brightness multiplier as :
+ *    -100 => 0.5
+ *    0    => 1.0
+ *    100  => 2.0
+ */
 void BrightnessXform::bind_shader_variables() {
   spdlog::debug("Brightness::bind_shader_variables()");
 
   int br;
   config().get("brightness", br);
   br = std::min(100, std::max(br, -100));
-  //-100 -> 0.5, 0 -> 1.0, 100 = 2.0
+
   float fbr;
   if (br < 0) fbr = (float) br / -200.0f;
   else if (br > 0) fbr = (float) br / 50.0f;

@@ -26,7 +26,7 @@ public:
   void init() override;
 
 protected:
-  void do_init_fbo() override;
+  void configure_framebuffer() override;
   std::unique_ptr<Shader> shader_;
 
 private:

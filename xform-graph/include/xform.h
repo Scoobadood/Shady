@@ -48,13 +48,12 @@ public:
   apply(const std::map<std::string, std::shared_ptr<void>> &inputs, uint32_t &err, std::string &err_msg);
 
   /**
-   * Get a mutable reference to the config.
+   * @return a mutable reference to the config.
    */
   XformConfig &config() { return config_; }
 
-
   /**
-   * Get a mutable reference to the config.
+   * @return an immutable reference to the config.
    */
   const XformConfig &config() const { return config_; }
 
@@ -116,9 +115,9 @@ protected:
 
   virtual ~Xform() = default;
 
-  void allocate_textures(GLuint *texture_ids) const;
+  static void allocate_textures(int32_t num_textures, GLuint *texture_ids) ;
 
-  void resize_textures(GLuint *texture_ids, GLsizei width, GLsizei height) const;
+  static void resize_textures(int32_t num_textures, GLuint *texture_ids, GLsizei width, GLsizei height) ;
 
   void add_input_port_descriptor(const std::string &name, const std::string &type, bool is_required = true);
 
@@ -127,11 +126,18 @@ protected:
   std::map<std::string, std::shared_ptr<const InputPortDescriptor>> input_port_descriptors_;
   std::map<std::string, std::shared_ptr<const OutputPortDescriptor>> output_port_descriptors_;
 
+  /* If true, the Xform can be applied */
   bool is_init_;
 
-  int32_t num_textures_;
-
 private:
+  bool check_init(uint32_t &err, std::string &err_msg);
+
+  bool check_required_inputs(const std::map<std::string, std::shared_ptr<void>> &inputs,
+                             uint32_t &err, std::string &err_msg);
+
+  /*
+   * The core functionality of the shader should be implemented here.
+   */
   virtual std::map<std::string, std::shared_ptr<void>>
   do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs, uint32_t &err, std::string &err_msg) = 0;
 

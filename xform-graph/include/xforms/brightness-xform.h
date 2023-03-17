@@ -10,6 +10,7 @@
 
 class BrightnessXform : public SingleIOShaderXform {
 public:
+  BrightnessXform();
   explicit BrightnessXform(const std::string &name);
 
   ~BrightnessXform() override;
@@ -17,7 +18,6 @@ public:
   std::string type() const override;
 
   void init() override;
-
 
 private:
   static uint32_t next_idx_;

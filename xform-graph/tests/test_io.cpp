@@ -13,6 +13,8 @@ public:
 
   std::string type() const override { return "noop"; }
 
+  void init() override {};
+
   std::map<std::string, std::shared_ptr<void>>
   do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,
            uint32_t &err, std::string &err_msg) override {
@@ -31,6 +33,8 @@ public:
 
   std::string type() const override { return "OutXform"; }
 
+  void init() override {};
+
   std::map<std::string, std::shared_ptr<void>>
   do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,
            uint32_t &err, std::string &err_msg) override {
@@ -46,6 +50,9 @@ public:
     add_input_port_descriptor("in_p1", "float");
     add_input_port_descriptor("in_p2", "image");
   }
+
+  void init() override {};
+
 
   std::string type() const override { return "InXform"; }
 

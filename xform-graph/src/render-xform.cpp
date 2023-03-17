@@ -5,6 +5,10 @@
 
 #include <utility>
 
+// Sets up a single quad
+void init_buffers(GLuint &vao_id, GLuint &vbo_verts, GLuint &vbo_indices);
+
+
 RenderXform::RenderXform(const std::string &name, XformConfig config) //
         : Xform(name, std::move(config)) //
         , fbo_{0} //
@@ -18,6 +22,21 @@ void RenderXform::init() {
   spdlog::debug("RenderXform::init");
   init_gl_resources();
 }
+
+/*
+ * Called in init(). Allocates resources used by this Xform.
+ * - FBO
+ * - VBO/VAO
+ */
+void RenderXform::init_gl_resources() {
+  spdlog::debug("RenderXform::init_gl_resources()");
+  init_buffers(vao_id_, vbo_verts_, vbo_indices_);
+
+  init_framebuffer();
+
+  gl_check_error_and_halt("init_gl_resources()");
+}
+
 
 RenderXform::~RenderXform() {
   glDeleteBuffers(1, &vbo_verts_);
@@ -54,39 +73,43 @@ void init_buffers(GLuint &vao_id, GLuint &vbo_verts, GLuint &vbo_indices) {
 }
 
 
+/**
+ * Create a framebuffer object for rendering output.
+ * Delegate the configuration of this to the subclass.
+ */
 void RenderXform::init_framebuffer() {
   spdlog::debug("RenderXform::init_framebuffer()");
   glGenFramebuffers(1, &fbo_);
+
   glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
 
-  do_init_fbo();
+  // Delegated to subclasses
+  configure_framebuffer();
 
   auto err = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (err != GL_FRAMEBUFFER_COMPLETE) {
     throw std::runtime_error(fmt::format("FB not complete : {}", err));
   }
+
+  // Unbind the FBO.
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void RenderXform::init_gl_resources() {
-  spdlog::debug("RenderXform::init_gl_resources()");
-  init_framebuffer();
-  init_buffers(vao_id_, vbo_verts_, vbo_indices_);
-  gl_check_error_and_halt("init_gl_resources()");
-}
 
+/**
+ * Bind the FBO and Vertex Array
+ */
 void RenderXform::start_render() const{
   spdlog::debug("RenderXform::start_render()");
 
   glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
 
-  GLenum drawBuffers[num_textures_];
-  for( GLenum i=0; i< num_textures_; ++i) drawBuffers[i] = GL_COLOR_ATTACHMENT0+i;
-  glDrawBuffers(num_textures_, drawBuffers);
-
   glBindVertexArray(vao_id_);
 }
 
+/*
+ * Unbind them.
+ */
 void RenderXform::end_render(){
   spdlog::debug("RenderXform::end_render()");
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
