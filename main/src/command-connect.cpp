@@ -39,7 +39,7 @@ int32_t Connect::execute(Context &context) {
   }
 
   auto fm = graph->connection_to(to_xform_, to_port_);
-  if (fm->first == from_xform_ && fm->second == from_port_) {
+  if (fm && fm->first == from_xform_ && fm->second == from_port_) {
     set_output(fmt::format("{}:{} is already connected to {}:{}",
                            from_xform_, from_port_, to_xform_, to_port_));
     return CMD_PORTS_ALREADY_CONNECTED;
