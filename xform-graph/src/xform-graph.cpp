@@ -1,5 +1,5 @@
 #include "xform-graph.h"
-#include "xform.h"
+#include "xforms/xform.h"
 
 #include <set>
 #include <map>
@@ -17,6 +17,39 @@ XformGraph::add_xform(const std::shared_ptr<Xform> &xform) {
   xforms_.emplace(xform->name(), xform);
   return true;
 }
+
+/* Delete the xform */
+bool XformGraph::delete_xform(const std::string& name) {
+  auto it = xforms_.find(name);
+  if( it == xforms_.end()) return false;
+  xforms_.erase(it);
+
+  // Delete the connections
+  for( auto from_it = connections_from_.begin(); from_it != connections_from_.end(); ) {
+    if( from_it->first.first == name) {
+      from_it = connections_from_.erase(from_it);
+    } else {
+      ++from_it;
+    }
+  }
+  // Delete the to connections
+  for( auto to_it = connections_to_.begin(); to_it != connections_to_.end(); ) {
+    if( to_it->first.first == name) {
+      to_it = connections_to_.erase(to_it);
+    } else {
+      ++to_it;
+    }
+  }
+  return true;
+}
+
+
+std::shared_ptr<Xform> XformGraph::xform(const std::string& name) const {
+  auto it = xforms_.find(name);
+  if( it == xforms_.end()) return nullptr;
+  return it->second;
+}
+
 
 bool XformGraph::add_connection(const std::string &from_xform_name,
                                 const std::string &from_port_name,
@@ -84,6 +117,17 @@ bool XformGraph::add_connection(const std::string &from_xform_name,
   connections_from_[{from_xform_name, from_port_name}] = {to_xform_name, to_port_name};
   connections_to_[{to_xform_name, to_port_name}] = {from_xform_name, from_port_name};
 
+  return true;
+}
+
+bool XformGraph::remove_connection(const std::string &to_xform_name,
+                       const std::string &to_port){
+  auto it = connections_to_.find({to_xform_name, to_port});
+  if (it == connections_to_.end()) {
+    spdlog::error("No such xform: {}", to_xform_name);
+    return false;
+  }
+  connections_to_.erase(it);
   return true;
 }
 
@@ -205,12 +249,26 @@ XformGraph::xforms() const {
   return xforms;
 }
 
-std::vector<std::pair<std::pair<std::string, std::string>,std::pair<std::string, std::string>>>
+std::vector<std::pair<std::pair<std::string, std::string>, std::pair<std::string, std::string>>>
 XformGraph::connections() const {
   using namespace std;
-  vector<pair<pair<string,string>, pair<string,string>>> conns;
-  for( auto & fcon : connections_from_) {
+  vector<pair<pair<string, string>, pair<string, string>>> conns;
+  for (auto &fcon: connections_from_) {
     conns.emplace_back(fcon);
   }
   return conns;
+}
+
+std::shared_ptr<std::pair<std::string, std::string>>
+XformGraph::connection_from(const std::string &xform, const std::string &port) const {
+  auto it = connections_from_.find({xform, port});
+  if (it == connections_from_.end()) return nullptr;
+  return std::make_shared<std::pair<std::string, std::string>>(it->second);
+}
+
+std::shared_ptr<std::pair<std::string, std::string>>
+XformGraph::connection_to(const std::string &xform, const std::string &port) const {
+  auto it = connections_to_.find({xform, port});
+  if (it == connections_to_.end()) return nullptr;
+  return std::make_shared<std::pair<std::string, std::string>>(it->second);
 }

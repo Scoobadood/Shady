@@ -1,5 +1,5 @@
-#include "xform.h"
 #include "xform-graph.h"
+#include "xforms/xform.h"
 #include "xforms/load-file-xform.h"
 #include "xforms/split-channel-xform.h"
 #include "xforms/save-file-xform.h"

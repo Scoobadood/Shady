@@ -1,5 +1,5 @@
-#include "xform-port.h"
-#include "xform.h"
+#include "xforms/xform-port.h"
+#include "xforms/xform.h"
 #include "test_base_xform.h"
 
 

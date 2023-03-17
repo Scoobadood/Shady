@@ -6,7 +6,7 @@
 #define IMAGE_TOYS_TEST_CONFIG_H
 
 #include <gtest/gtest.h>
-#include "xform-config.h"
+#include "xforms/xform-config.h"
 
 class TestConfig : public testing::Test {
 public:

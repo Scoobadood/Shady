@@ -1,7 +1,7 @@
 #ifndef IMAGE_TOYS_RENDER_XFORM_H
 #define IMAGE_TOYS_RENDER_XFORM_H
 
-#include "xform.h"
+#include "xforms/xform.h"
 
 class RenderXform : public Xform {
 public:

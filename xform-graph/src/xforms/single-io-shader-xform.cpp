@@ -1,9 +1,9 @@
-#include "single-io-shader-xform.h"
-#include "xform-config.h"
+#include "xforms/single-io-shader-xform.h"
+#include "xforms/xform-config.h"
 #include "xform-texture-meta.h"
 #include "gl_utils.h"
 
-#include <spdlog/spdlog-inl.h>
+#include "spdlog/spdlog-inl.h"
 
 #include <utility>
 

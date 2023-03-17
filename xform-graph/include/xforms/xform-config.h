@@ -24,6 +24,15 @@ public:
     bool operator==(const PropertyDescriptor &other) const {
       return other.type == type && other.name == name;
     }
+
+    std::string type_name() const {
+      switch(type) {
+        case STRING: return "STRING";
+        case FLOAT: return "FLOAT";
+        case INT: return "INT";
+        case UNKNOWN: return "UNKNOWN";
+      }
+    }
   };
 
   explicit XformConfig(const std::vector<const PropertyDescriptor> &descriptors = {});

@@ -1,5 +1,5 @@
 #include "xforms/save-file-xform.h"
-#include <spdlog/spdlog-inl.h>
+#include "spdlog/spdlog-inl.h"
 
 #include <utility>
 #include "xform-texture-meta.h"

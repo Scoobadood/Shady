@@ -1,6 +1,6 @@
 #include "xform-io.h"
 #include "xform-graph.h"
-#include "xform-config.h"
+#include "xforms/xform-config.h"
 #include "xform-factory.h"
 
 #include <fstream>
@@ -9,20 +9,6 @@
 #include "nlohmann/json.hpp"
 
 #include <spdlog/spdlog-inl.h>
-
-std::string string_value_of_pd_type(XformConfig::PropertyDescriptor::Type type) {
-  std::string value;
-  switch (type) {
-    case XformConfig::PropertyDescriptor::STRING:
-      return "STRING";
-    case XformConfig::PropertyDescriptor::FLOAT:
-      return "FLOAT";
-    case XformConfig::PropertyDescriptor::INT:
-      return "INT";
-    default:
-      return "???";
-  }
-}
 
 XformConfig::PropertyDescriptor::Type type_for_string(const std::string &s) {
   std::string str = s;
@@ -49,7 +35,7 @@ xform_write_graph(std::ostream &os, const std::shared_ptr<XformGraph> &graph) {
     for (const auto &pd: x->config().descriptors()) {
       json p_j;
       p_j["name"] = pd.name;
-      p_j["type"] = string_value_of_pd_type(pd.type);
+      p_j["type"] = pd.type_name();
       if (pd.type == XformConfig::PropertyDescriptor::STRING) {
         std::string value;
         x->config().get(pd.name, value);

@@ -1,5 +1,5 @@
 #include "xforms/brightness-xform.h"
-#include <spdlog/spdlog-inl.h>
+#include "spdlog/spdlog-inl.h"
 
 namespace {
   const GLchar *v_shader_source[] = {R"(

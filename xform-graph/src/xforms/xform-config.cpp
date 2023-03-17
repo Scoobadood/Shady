@@ -1,4 +1,5 @@
-#include "xform-config.h"
+#include "xforms/xform-config.h"
+#include <spdlog/spdlog-inl.h>
 
 #include <utility>
 #include <vector>
@@ -25,8 +26,20 @@ XformConfig::set(const std::string &name, const std::string &value) {
   if (it == descriptors_.end()) return;
   if (it->second.type != PropertyDescriptor::STRING) return;
 
-  auto xp = std::make_shared<TypedProperty<const std::string>>(name, value);
-  values_.emplace(name, xp);
+  std::shared_ptr<TypedProperty<const std::string>> xp = std::make_shared<TypedProperty<const std::string>>(name, value);
+
+  auto it2 = values_.find(name);
+  if (it2 != values_.end()) {
+    auto ptr = std::static_pointer_cast<TypedProperty<std::string>>(it2->second);
+    spdlog::info("Old value : {}", ptr->value());
+  }
+  values_[name]= xp;
+
+  it2 = values_.find(name);
+  auto ptr = std::static_pointer_cast<TypedProperty<std::string>>(it2->second);
+  spdlog::info("New value : {}", ptr->value());
+
+
 }
 
 void
@@ -36,7 +49,7 @@ XformConfig::set(const std::string &name, float value) {
   if (it->second.type != PropertyDescriptor::FLOAT) return;
 
   auto xp = std::make_shared<TypedProperty<float>>(name, value);
-  values_.emplace(name, xp);
+  values_[name]= xp;
 }
 
 void
@@ -46,7 +59,7 @@ XformConfig::set(const std::string &name, int value) {
   if (it->second.type != PropertyDescriptor::INT) return;
 
   auto xp = std::make_shared<TypedProperty<int>>(name, value);
-  values_.emplace(name, xp);
+  values_[name]= xp;
 }
 
 bool

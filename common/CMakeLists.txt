@@ -26,6 +26,7 @@ add_library(Common
         src/float_image.cpp  include/float_image.h
         src/shader.cpp include/shader.h
         src/gl_utils.cpp include/gl_utils.h
+        src/string_utils.cpp include/string_utils.h
         )
 
 target_include_directories(Common

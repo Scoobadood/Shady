@@ -18,22 +18,22 @@ add_definitions(-DGL_SILENCE_DEPRECATION)
 add_library(Xform SHARED
         # Core graph
         src/xform-graph.cpp include/xform-graph.h
-        src/xform.cpp include/xform.h
-        src/xform-port.cpp include/xform-port.h
-        src/render-xform.cpp include/render-xform.h
-        src/xform-config.cpp include/xform-config.h
-        src/single-io-shader-xform.cpp include/single-io-shader-xform.h
+        src/xforms/xform-port.cpp include/xforms/xform-port.h
+        src/xforms/xform-config.cpp include/xforms/xform-config.h
 
         # Graph IO
         src/xform-io.cpp include/xform-io.h
         src/xform-factory.cpp include/xform-factory.h
 
         # Specific functions
+        src/xforms/xform.cpp include/xforms/xform.h
+        src/xforms/render-xform.cpp include/xforms/render-xform.h
+        src/xforms/single-io-shader-xform.cpp include/xforms/single-io-shader-xform.h
         src/image_io.cpp include/image_io.h
-        src/load-file-xform.cpp include/xforms/load-file-xform.h
-        src/split-channel-xform.cpp include/xforms/split-channel-xform.h
-        src/save-file-xform.cpp include/xforms/save-file-xform.h
-        src/brightness-xform.cpp include/xforms/brightness-xform.h
+        src/xforms/load-file-xform.cpp include/xforms/load-file-xform.h
+        src/xforms/split-channel-xform.cpp include/xforms/split-channel-xform.h
+        src/xforms/save-file-xform.cpp include/xforms/save-file-xform.h
+        src/xforms/brightness-xform.cpp include/xforms/brightness-xform.h
         )
 
 target_include_directories(Xform

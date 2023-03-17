@@ -1,6 +1,6 @@
 #include "xforms/split-channel-xform.h"
 #include "xform-texture-meta.h"
-#include <spdlog/spdlog-inl.h>
+#include "spdlog/spdlog-inl.h"
 
 const GLchar *v_shader_source[] = {R"(
 #version 410 core

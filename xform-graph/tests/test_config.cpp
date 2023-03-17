@@ -1,4 +1,4 @@
-#include "xform-config.h"
+#include "xforms/xform-config.h"
 #include "test_config.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

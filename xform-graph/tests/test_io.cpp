@@ -1,6 +1,6 @@
 #include "xform-io.h"
 #include "xform-factory.h"
-#include "xform-config.h"
+#include "xforms/xform-config.h"
 
 #include <gtest/gtest.h>
 #include <utility>

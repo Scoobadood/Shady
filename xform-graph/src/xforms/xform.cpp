@@ -1,9 +1,9 @@
-#include "xform.h"
+#include "xforms/xform.h"
 #include "gl_utils.h"
 
 #include <string>
 #include <utility>
-#include <spdlog/spdlog-inl.h>
+#include "spdlog/spdlog-inl.h"
 
 Xform::Xform(std::string name, XformConfig config) //
         : is_init_{false} //

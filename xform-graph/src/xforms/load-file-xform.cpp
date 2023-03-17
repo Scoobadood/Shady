@@ -4,7 +4,7 @@
 #include "xform-texture-meta.h"
 #include "xform-factory.h"
 
-#include <spdlog/spdlog-inl.h>
+#include "spdlog/spdlog-inl.h"
 
 #include <utility>
 

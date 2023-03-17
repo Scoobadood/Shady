@@ -1,4 +1,4 @@
-#include "xform-port.h"
+#include "xforms/xform-port.h"
 #include <gtest/gtest.h>
 
 TEST(TestPorts, default_compatibility) {

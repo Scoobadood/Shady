@@ -1,7 +1,7 @@
 #ifndef IMAGE_TOYS_TEST_BASE_XFORM_H
 #define IMAGE_TOYS_TEST_BASE_XFORM_H
 
-#include "xform.h"
+#include "xforms/xform.h"
 #include <strstream>
 #include <spdlog/spdlog-inl.h>
 

@@ -1,7 +1,7 @@
-#include "render-xform.h"
+#include "xforms/render-xform.h"
 #include "gl_utils.h"
 
-#include <spdlog/spdlog-inl.h>
+#include "spdlog/spdlog-inl.h"
 
 #include <utility>
 

@@ -5,8 +5,8 @@
 #ifndef IMAGE_TOYS_XFORM_FACTORY_H
 #define IMAGE_TOYS_XFORM_FACTORY_H
 
-#include "xform-config.h"
-#include "xform.h"
+#include "xforms/xform-config.h"
+#include "xforms/xform.h"
 
 using FactoryFn = std::function<std::shared_ptr<Xform>(const std::string &)>;
 
