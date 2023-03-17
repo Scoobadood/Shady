@@ -16,6 +16,7 @@ const int32_t CMD_PORTS_NOT_CONNECTED = 5;
 const int32_t CMD_PORTS_ALREADY_CONNECTED = 6;
 const int32_t CMD_SYNTAX_ERROR = 7;
 const int32_t CMD_NO_PROPERTY = 8;
+const int32_t CMD_UNKNOWN_XFORM_TYPE = 9;
 
 using Context = std::map<std::string, std::shared_ptr<void>>;
 
@@ -56,6 +57,8 @@ protected:
 
   int32_t error_no_property(const std::string &xform,
                             const std::string &config);
+
+  int32_t error_no_such_xform(const std:: string& xform_type_);
 
   int32_t error_no_error();
 

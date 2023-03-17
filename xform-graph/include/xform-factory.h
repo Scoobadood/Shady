@@ -17,6 +17,10 @@ public:
              const std::string &name,
              const std::map<std::string, std::string> &conf);
 
+  static bool can_make(const std::string &type) {
+    return registry_.find(type) != registry_.end();
+  }
+
   static void
   register_type(const std::string &type,
                 const FactoryFn &creator);
@@ -28,7 +32,11 @@ private:
 
 #define REGISTER_CLASS(cls)                                   \
 std::shared_ptr<cls> create_##cls(const std::string& name) {  \
-  auto c = std::make_shared<cls>(name);                       \
+  std::shared_ptr<cls> c;                                     \
+  if( name.empty())                                           \
+    c = std::make_shared<cls>();                              \
+  else                                                        \
+    c = std::make_shared<cls>(name);                          \
   c->init();                                                  \
   return c;                                                   \
 }                                                             \

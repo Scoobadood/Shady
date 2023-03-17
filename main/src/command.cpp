@@ -10,6 +10,7 @@
 #include "command-run.h"
 #include "command-disconnect.h"
 #include "command-configure.h"
+#include "command-add.h"
 
 #include <string>
 #include <map>
@@ -52,6 +53,12 @@ int32_t Command::error_general_failure(){
   return CMD_FAILED;
 }
 
+int32_t Command::error_no_such_xform(const std:: string& xform_type_) {
+  set_output(fmt::format("Invalid xform: {}", xform_type_));
+  return CMD_UNKNOWN_XFORM_TYPE;
+}
+
+
 std::shared_ptr<XformGraph> Command::get_graph(const Context &context) {
   auto it = context.find("graph");
   if (it == context.end() || it->second == nullptr) return nullptr;
@@ -91,5 +98,6 @@ std::shared_ptr<Command> Command::from_string(const std::string &cmd) {
   if (cmd_name == "configure") return make_shared<Configure>(cmd_strings);
   if (cmd_name == "delete") return make_shared<Delete>(cmd_strings);
   if (cmd_name == "run") return make_shared<Run>();
+  if (cmd_name == "add") return make_shared<Add>(cmd_strings);
   return nullptr;
 }

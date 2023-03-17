@@ -30,6 +30,7 @@ add_executable(shady_cli
         include/command-connect.h src/command-connect.cpp
         include/command-configure.h src/command-configure.cpp
         include/command-disconnect.h src/command-disconnect.cpp
+        include/command-add.h src/command-add.cpp
         )
 
 target_include_directories(shady_cli

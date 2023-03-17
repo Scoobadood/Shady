@@ -31,6 +31,9 @@ public:
     add_output_port_descriptor("out_p2", "float");
   }
 
+  explicit OutXform() //
+          : OutXform("out-xform"){}
+
   std::string type() const override { return "OutXform"; }
 
   void init() override {};
@@ -50,6 +53,9 @@ public:
     add_input_port_descriptor("in_p1", "float");
     add_input_port_descriptor("in_p2", "image");
   }
+  explicit InXform() //
+          : InXform("in-xform"){}
+
 
   void init() override {};
 
