@@ -30,7 +30,7 @@ private:
 };
 
 
-#define REGISTER_CLASS(cls)                                   \
+#define REGISTER_XFORM(cls,type)                              \
 std::shared_ptr<cls> create_##cls(const std::string& name) {  \
   std::shared_ptr<cls> c;                                     \
   if( name.empty())                                           \
@@ -40,12 +40,15 @@ std::shared_ptr<cls> create_##cls(const std::string& name) {  \
   c->init();                                                  \
   return c;                                                   \
 }                                                             \
+                                                              \
 struct Register##cls {                                        \
   explicit Register##cls(const std::string& name) {           \
-  XformFactory::register_type(name, &create_##cls);           \
-}                                                             \
+    XformFactory::register_type(name, &create_##cls);         \
+  }                                                           \
 };                                                            \
-static Register##cls myclass_##cls(#cls);
+                                                              \
+const std::string cls::TYPE = #type;                          \
+static Register##cls myclass_##cls(cls::TYPE);
 
 
 #endif //IMAGE_TOYS_XFORM_FACTORY_H

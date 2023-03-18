@@ -18,8 +18,6 @@ public:
 
   ~SingleIOShaderXform() override;
 
-  std::string type() const override = 0;
-
   /**
    * Virtual initialisation; MUST be called before object can be used.
    */

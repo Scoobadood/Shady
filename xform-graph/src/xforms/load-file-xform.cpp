@@ -8,7 +8,6 @@
 
 #include <utility>
 
-const std::string TYPE = "LoadFile";
 uint32_t LoadFileXform::next_idx_ = 0;
 
 std::string LoadFileXform::type() const {

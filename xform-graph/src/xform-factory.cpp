@@ -40,7 +40,7 @@ XformFactory::register_type(const std::string &type,
               const std::function<std::shared_ptr<Xform>(const std::string &)> &creator) {
   assert(creator);
   if( registry_.find(type) != registry_.end()) {
-    spdlog::error( "Class {} is already regstered.", type);
+    spdlog::error( "Class {} is already registered.", type);
   }
   registry_.emplace(type, creator);
 }

@@ -11,7 +11,8 @@ public:
           : Xform(std::move(name), std::move(cfg)) //
   {}
 
-  std::string type() const override { return "noop"; }
+  static const std::string TYPE;
+  std::string type() const override { return TYPE; }
 
   void init() override {};
 
@@ -34,7 +35,8 @@ public:
   explicit OutXform() //
           : OutXform("out-xform"){}
 
-  std::string type() const override { return "OutXform"; }
+  static const std::string TYPE;
+  std::string type() const override { return TYPE; }
 
   void init() override {};
 
@@ -59,8 +61,8 @@ public:
 
   void init() override {};
 
-
-  std::string type() const override { return "InXform"; }
+  static const std::string TYPE;
+  std::string type() const override { return TYPE; }
 
   std::map<std::string, std::shared_ptr<void>>
   do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,
@@ -69,9 +71,9 @@ public:
   }
 };
 
-REGISTER_CLASS(InXform);
+REGISTER_XFORM(InXform, InXform);
 
-REGISTER_CLASS(OutXform);
+REGISTER_XFORM(OutXform, OutXform);
 
 
 class TestIO : public testing::Test {

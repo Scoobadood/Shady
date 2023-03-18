@@ -37,7 +37,6 @@ void main() {
 
 
 uint32_t SplitChannelXform::next_idx_ = 0;
-const std::string TYPE = "SplitChannel";
 
 std::string SplitChannelXform::type() const {
   return TYPE;

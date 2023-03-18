@@ -11,11 +11,14 @@
 class BrightnessXform : public SingleIOShaderXform {
 public:
   BrightnessXform();
+
   explicit BrightnessXform(const std::string &name);
 
   ~BrightnessXform() override;
 
   std::string type() const override;
+
+  const static std::string TYPE;
 
   void init() override;
 
@@ -27,6 +30,6 @@ private:
   void bind_shader_variables() override;
 };
 
-REGISTER_CLASS(BrightnessXform)
+REGISTER_XFORM(BrightnessXform, Brightness)
 
 #endif //IMAGE_TOYS_BRIGHTNESS_XFORM_H

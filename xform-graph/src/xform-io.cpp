@@ -31,27 +31,29 @@ xform_write_graph(std::ostream &os, const std::shared_ptr<XformGraph> &graph) {
     x_j["name"] = x->name();
     x_j["type"] = x->type();
 
-    json cfg_j;
-    for (const auto &pd: x->config().descriptors()) {
-      json p_j;
-      p_j["name"] = pd.name;
-      p_j["type"] = pd.type_name();
-      if (pd.type == XformConfig::PropertyDescriptor::STRING) {
-        std::string value;
-        x->config().get(pd.name, value);
-        p_j["value"] = value;
-      } else if (pd.type == XformConfig::PropertyDescriptor::FLOAT) {
-        float value;
-        x->config().get(pd.name, value);
-        p_j["value"] = value;
-      } else /* pd.type == INT */ {
-        int value;
-        x->config().get(pd.name, value);
-        p_j["value"] = value;
+    if (!x->config().descriptors().empty()) {
+      json cfg_j;
+      for (const auto &pd: x->config().descriptors()) {
+        json p_j;
+        p_j["name"] = pd.name;
+        p_j["type"] = pd.type_name();
+        if (pd.type == XformConfig::PropertyDescriptor::STRING) {
+          std::string value;
+          x->config().get(pd.name, value);
+          p_j["value"] = value;
+        } else if (pd.type == XformConfig::PropertyDescriptor::FLOAT) {
+          float value;
+          x->config().get(pd.name, value);
+          p_j["value"] = value;
+        } else /* pd.type == INT */ {
+          int value;
+          x->config().get(pd.name, value);
+          p_j["value"] = value;
+        }
+        cfg_j.emplace_back(p_j);
       }
-      cfg_j.emplace_back(p_j);
+      x_j["config"] = cfg_j;
     }
-    x_j["config"] = cfg_j;
     g_j["xforms"].emplace_back(x_j);
   }
 

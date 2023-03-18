@@ -6,7 +6,6 @@
 #include "image_io.h"
 
 uint32_t SaveFileXform::next_idx_ = 0;
-const std::string TYPE = "SaveFile";
 
 std::string SaveFileXform::type() const {
   return TYPE;

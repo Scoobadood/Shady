@@ -27,7 +27,6 @@ void main() {
 }
 
 
-const std::string TYPE = "Brightness";
 uint32_t BrightnessXform::next_idx_ = 0;
 
 std::string BrightnessXform::type() const {

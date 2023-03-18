@@ -14,6 +14,8 @@ public:
 
   std::string type() const override;
 
+  const static std::string TYPE;
+
   /**
    * Virtual initialisation; MUST be called before object can be used.
    */
@@ -30,6 +32,6 @@ private:
   GLuint image_tx_;
 };
 
-REGISTER_CLASS(LoadFileXform)
+REGISTER_XFORM(LoadFileXform, LoadFile)
 
 #endif //IMAGE_TOYS_LOAD_FILE_XFORM_H

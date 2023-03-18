@@ -27,13 +27,15 @@
 
 class SplitChannelXform : public RenderXform {
 public:
-  explicit SplitChannelXform(const std::string& name);
+  explicit SplitChannelXform(const std::string &name);
 
   SplitChannelXform();
 
   ~SplitChannelXform() override;
 
   std::string type() const override;
+
+  static const std::string TYPE;
 
   void init() override;
 
@@ -50,7 +52,7 @@ private:
   std::shared_ptr<Shader> split_prog_;
 };
 
-REGISTER_CLASS(SplitChannelXform)
+REGISTER_XFORM(SplitChannelXform, SplitChannel)
 
 
 #endif //IMAGE_TOYS_SPLIT_CHANNEL_XFORM_H

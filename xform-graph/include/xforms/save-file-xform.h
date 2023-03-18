@@ -14,6 +14,8 @@ public:
 
   std::string type() const override;
 
+  const static std::string TYPE;
+
   void init() override;
 
 private:
@@ -23,6 +25,6 @@ private:
            uint32_t &err, std::string &err_msg) override;
 };
 
-REGISTER_CLASS(SaveFileXform)
+REGISTER_XFORM(SaveFileXform, SaveFile)
 
 #endif //IMAGE_TOYS_SAVE_FILE_XFORM_H
