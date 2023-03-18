@@ -27,6 +27,7 @@ add_library(Common
         src/shader.cpp include/shader.h
         src/gl_utils.cpp include/gl_utils.h
         src/string_utils.cpp include/string_utils.h
+        src/file_utils.cpp include/file_utils.h
         )
 
 target_include_directories(Common
