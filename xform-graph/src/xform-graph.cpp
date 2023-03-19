@@ -7,6 +7,12 @@
 
 #include <spdlog/spdlog-inl.h>
 
+std::shared_ptr<void> XformGraph::output_from(const std::string &xform_name, const std::string &port_name) const {
+  auto it = outputs_.find({xform_name, port_name});
+  if (it == outputs_.end()) return nullptr;
+  return it->second;
+}
+
 bool
 XformGraph::add_xform(const std::shared_ptr<Xform> &xform) {
   if (xforms_.find(xform->name()) != xforms_.end()) {
@@ -19,22 +25,22 @@ XformGraph::add_xform(const std::shared_ptr<Xform> &xform) {
 }
 
 /* Delete the xform */
-bool XformGraph::delete_xform(const std::string& name) {
+bool XformGraph::delete_xform(const std::string &name) {
   auto it = xforms_.find(name);
-  if( it == xforms_.end()) return false;
+  if (it == xforms_.end()) return false;
   xforms_.erase(it);
 
   // Delete the connections
-  for( auto from_it = connections_from_.begin(); from_it != connections_from_.end(); ) {
-    if( from_it->first.first == name) {
+  for (auto from_it = connections_from_.begin(); from_it != connections_from_.end();) {
+    if (from_it->first.first == name) {
       from_it = connections_from_.erase(from_it);
     } else {
       ++from_it;
     }
   }
   // Delete the to connections
-  for( auto to_it = connections_to_.begin(); to_it != connections_to_.end(); ) {
-    if( to_it->first.first == name) {
+  for (auto to_it = connections_to_.begin(); to_it != connections_to_.end();) {
+    if (to_it->first.first == name) {
       to_it = connections_to_.erase(to_it);
     } else {
       ++to_it;
@@ -44,9 +50,9 @@ bool XformGraph::delete_xform(const std::string& name) {
 }
 
 
-std::shared_ptr<Xform> XformGraph::xform(const std::string& name) const {
+std::shared_ptr<Xform> XformGraph::xform(const std::string &name) const {
   auto it = xforms_.find(name);
-  if( it == xforms_.end()) return nullptr;
+  if (it == xforms_.end()) return nullptr;
   return it->second;
 }
 
@@ -121,7 +127,7 @@ bool XformGraph::add_connection(const std::string &from_xform_name,
 }
 
 bool XformGraph::remove_connection(const std::string &to_xform_name,
-                       const std::string &to_port){
+                                   const std::string &to_port) {
   auto it = connections_to_.find({to_xform_name, to_port});
   if (it == connections_to_.end()) {
     spdlog::error("No such xform: {}", to_xform_name);
@@ -157,7 +163,7 @@ XformGraph::dependencies_for(const std::shared_ptr<Xform> &xform) const {
  *       valid. We need to decide if we have xforms cache results or do it in the graph.
  *       For now we will re-evaluate everything.
  */
-bool XformGraph::evaluate() const {
+bool XformGraph::evaluate() {
   using namespace std;
 
   /*
@@ -188,7 +194,7 @@ bool XformGraph::evaluate() const {
 
   // Evaluate until we're done or cannot continue.
   set<string> resolved_xforms;
-  map<pair<string, string>, shared_ptr<void>> results;
+  outputs_.clear();
   while (!to_satisfy.empty()) {
     const auto &curr_xform = to_satisfy.back();
 
@@ -220,14 +226,14 @@ bool XformGraph::evaluate() const {
     for (const auto &ipd: curr_xform->input_port_descriptors()) {
       auto iter = connections_to_.find({curr_xform->name(), ipd->name()});
       if (iter == connections_to_.end()) continue;
-      inputs.emplace(ipd->name(), results.at({iter->second}));
+      inputs.emplace(ipd->name(), outputs_.at({iter->second}));
     }
     uint32_t err;
     std::string err_msg;
     auto out = curr_xform->apply(inputs, err, err_msg);
     if (err == XFORM_OK) {
       for (const auto &o: out) {
-        results.emplace(make_pair(curr_xform->name(), o.first), o.second);
+        outputs_.emplace(make_pair(curr_xform->name(), o.first), o.second);
       }
       resolved_xforms.emplace(curr_xform->name());
     } else {

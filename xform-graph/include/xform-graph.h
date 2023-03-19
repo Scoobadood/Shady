@@ -24,7 +24,9 @@ class XformGraph {
 public:
   bool add_xform(const std::shared_ptr<Xform> &xform);
 
-  bool evaluate() const;
+  bool evaluate();
+
+  std::shared_ptr<void> output_from(const std::string &xform_name, const std::string &port_name) const;
 
   /* @return a vector of all xforms */
   std::vector<std::shared_ptr<const Xform>> xforms() const;
@@ -62,6 +64,7 @@ public:
                          const std::string &to_port);
 
 private:
+  std::map<std::pair<std::string, std::string>, std::shared_ptr<void>> outputs_;
   std::map<std::string, std::shared_ptr<Xform>> xforms_;
   std::map<std::pair<std::string, std::string>, std::pair<std::string, std::string>> connections_from_;
   std::map<std::pair<std::string, std::string>, std::pair<std::string, std::string>> connections_to_;

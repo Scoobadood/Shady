@@ -1,6 +1,7 @@
 #include "xform-io.h"
 #include "xform-graph.h"
 #include "file_utils.h"
+#include "xform-texture-meta.h"
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
@@ -49,9 +50,30 @@ void render_graph(const std::shared_ptr<XformGraph> &graph) {
   for (const auto &xform: graph->xforms()) {
     ImGui::Begin(xform->name().c_str(), nullptr,
                  ImGuiWindowFlags_NoResize |
+                 ImGuiWindowFlags_AlwaysAutoResize |
                  ImGuiWindowFlags_NoCollapse
     );
-    ImGui::SetWindowSize(ImVec2((float) 160, (float) 120));
+
+    ImGui::SetWindowSize(ImVec2((float) 160, (float) 140));
+    auto has_op = !xform->output_port_descriptors().empty();
+    if (has_op) {
+      if (ImGui::CollapsingHeader("Image", ImGuiTreeNodeFlags_None)) {
+        /* Add image */
+        auto op = graph->output_from(xform->name(), xform->output_port_descriptors().front()->name());
+        if (op) {
+          auto tx = (TextureMetadata *) op.get();
+          ImGui::Image((ImTextureID) (tx->texture_id), ImVec2(160, 120));
+        }
+      }
+    }
+    auto has_config = !xform->config().descriptors().empty();
+    if (has_config) {
+      if (ImGui::CollapsingHeader("Config", ImGuiTreeNodeFlags_None)) {
+        /* Add image */
+        for (const auto &pd: xform->config().descriptors())
+          ImGui::Text(pd.name.c_str());
+      }
+    }
 
     /*
      * Render inputs
@@ -93,6 +115,8 @@ void render_graph(const std::shared_ptr<XformGraph> &graph) {
     }
 
     ImGui::End();
+//    ImGui::SetNextWindowPos();
+
   }
 
   /**
@@ -124,7 +148,7 @@ char **get_graph_file_names(uint32_t &num_files) {
   });
 
   num_files = files.size();
-  if( num_files) {
+  if (num_files) {
     char **names = new char *[files.size()];
     for (auto i = 0; i < num_files; ++i) {
       names[i] = new char[files[i].size() + 1];
@@ -133,6 +157,53 @@ char **get_graph_file_names(uint32_t &num_files) {
     return names;
   }
   return nullptr;
+}
+
+void do_menus(std::shared_ptr<XformGraph> &graph, bool &open_graph_menu_open) {
+  if (ImGui::BeginMainMenuBar()) {
+    if (ImGui::BeginMenu("Graph")) {
+      if (ImGui::MenuItem("Open...", "Ctrl+O")) {
+        open_graph_menu_open = true;
+      }
+      if (ImGui::MenuItem("Save", "Ctrl+S")) { /* Do stuff */ }
+      if (ImGui::MenuItem("Close", "Ctrl+W")) { graph = nullptr; }
+      ImGui::EndMenu();
+    }
+    ImGui::EndMainMenuBar();
+  }
+
+  if (open_graph_menu_open)
+    ImGui::OpenPopup("XXX");
+
+  if (ImGui::BeginPopupModal("XXX")) {
+    ImGui::Text("Open a graph");
+    // Testing behavior of widgets stacking their own regular popups over the modal.
+    static int selected_item = 0;
+    uint32_t num_graph_files;
+    auto graph_file_names = get_graph_file_names(num_graph_files);
+    ImGui::ListBox("Graphs", &selected_item, graph_file_names, num_graph_files);
+
+    if (ImGui::Button("Cancel")) {
+      open_graph_menu_open = false;
+      ImGui::CloseCurrentPopup();
+    }
+    if (num_graph_files == 0)
+      ImGui::BeginDisabled();
+    if (ImGui::Button("Open")) {
+      open_graph_menu_open = false;
+      graph = load_graph(graph_file_names[selected_item]);
+      graph->evaluate();
+      ImGui::CloseCurrentPopup();
+    }
+    if (num_graph_files == 0)
+      ImGui::EndDisabled();
+    ImGui::EndPopup();
+
+    for (auto i = 0; i < num_graph_files; ++i) {
+      delete[] graph_file_names[i];
+    }
+    delete graph_file_names;
+  }
 }
 
 int main() {
@@ -160,50 +231,7 @@ int main() {
     }
 
     /* Menus */
-    if (ImGui::BeginMainMenuBar()) {
-      if (ImGui::BeginMenu("Graph")) {
-        if (ImGui::MenuItem("Open...", "Ctrl+O")) {
-          open_graph_menu_open = true;
-        }
-        if (ImGui::MenuItem("Save", "Ctrl+S")) { /* Do stuff */ }
-        if (ImGui::MenuItem("Close", "Ctrl+W")) { graph = nullptr; }
-        ImGui::EndMenu();
-      }
-      ImGui::EndMainMenuBar();
-    }
-
-    if (open_graph_menu_open)
-      ImGui::OpenPopup("XXX");
-
-    if (ImGui::BeginPopupModal("XXX")) {
-      ImGui::Text("Open a graph");
-      // Testing behavior of widgets stacking their own regular popups over the modal.
-      static int selected_item = 0;
-      uint32_t num_graph_files;
-      auto graph_file_names = get_graph_file_names(num_graph_files);
-      ImGui::ListBox("Graphs", &selected_item, graph_file_names, num_graph_files);
-
-      if (ImGui::Button("Cancel")) {
-        open_graph_menu_open = false;
-        ImGui::CloseCurrentPopup();
-      }
-      if (num_graph_files == 0)
-        ImGui::BeginDisabled();
-      if (ImGui::Button("Open")) {
-        open_graph_menu_open = false;
-        graph = load_graph(graph_file_names[selected_item]);
-        ImGui::CloseCurrentPopup();
-      }
-      if (num_graph_files == 0)
-        ImGui::EndDisabled();
-      ImGui::EndPopup();
-
-      for( auto i=0; i<num_graph_files; ++i) {
-        delete[] graph_file_names[i];
-      }
-      delete graph_file_names;
-    }
-
+    do_menus(graph, open_graph_menu_open);
 
 
 /*
