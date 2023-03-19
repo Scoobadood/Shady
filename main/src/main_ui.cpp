@@ -42,95 +42,177 @@ void initImGui(GLFWwindow *window) {
   ImGui_ImplOpenGL3_Init(glsl_version);
 }
 
+/*
+ * Render input ports for a specific Xform
+ */
+void render_input_ports(const std::shared_ptr<const Xform> &xform,
+                        std::map<std::pair<std::string, std::string>, ImVec2> &in_port_coords) {
+
+  if (ImGui::BeginChild(
+          "inputs",
+          ImVec2(80, 140),
+          true,
+          0)) {
+
+    static int item_current_idx = 0;
+    auto num_inputs = xform->input_port_descriptors().size();
+
+    if (ImGui::BeginListBox("inputs", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing()))) {
+      for (int n = 0; n < num_inputs; n++) {
+        auto ipd = xform->input_port_descriptors().at(n);
+
+        const bool is_selected = (item_current_idx == n);
+        if (ImGui::Selectable(ipd->name().c_str(), is_selected))
+          item_current_idx = n;
+
+        ImVec2 port_pos = ImGui::GetItemRectMin();
+        auto sz = ImGui::GetItemRectSize();
+        port_pos.y += (sz.y * 0.5f);
+        ImGui::GetForegroundDrawList()->AddCircleFilled(port_pos,
+                                                        5.0f,  ImColor(128, 20, 20),
+                                                        0);
+        in_port_coords.emplace(std::make_pair(xform->name(), ipd->name()),
+                               port_pos);
+
+        // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+        if (is_selected)
+          ImGui::SetItemDefaultFocus();
+      }
+      ImGui::EndListBox();
+    }
+  }
+  ImGui::EndChild();
+}
+
+/*
+ * Render output ports for a specific Xform
+ */
+void render_output_ports(const std::shared_ptr<const Xform> &xform,
+                         std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords) {
+  if (ImGui::BeginChild(
+          "outputs",
+          ImVec2(80, 140),
+          true,
+          0)) {
+
+    static int item_current_idx = 0;
+    auto num_outputs = xform->output_port_descriptors().size();
+
+    if (ImGui::BeginListBox("outputs", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing()))) {
+      for (int n = 0; n < num_outputs; n++) {
+        auto opd = xform->output_port_descriptors().at(n);
+
+        const bool is_selected = (item_current_idx == n);
+        if (ImGui::Selectable(opd->name().c_str(), is_selected))
+          item_current_idx = n;
+
+
+        ImVec2 port_pos = ImGui::GetItemRectMin();
+        auto sz = ImGui::GetItemRectSize();
+        port_pos.y += (sz.y * 0.5f);
+        port_pos.x += sz.x;
+        ImGui::GetForegroundDrawList()->AddCircleFilled(port_pos,
+                                                        5.0f,  ImColor(20, 128, 20),
+                                                        0);
+        out_port_coords.emplace(std::make_pair(xform->name(), opd->name()),
+                                port_pos);
+
+        // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+        if (is_selected)
+          ImGui::SetItemDefaultFocus();
+      }
+      ImGui::EndListBox();
+    }
+  }
+  ImGui::EndChild();
+}
+
+
+/*
+ * Render IO ports for a specific Xform
+ */
+void render_ports(const std::shared_ptr<const Xform> &xform,
+                  std::map<std::pair<std::string, std::string>, ImVec2> &in_port_coords,
+                  std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords) {
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
+  if (ImGui::BeginChild("ports", ImVec2(160, 140), true, ImGuiWindowFlags_AlwaysAutoResize |
+  ImGuiWindowFlags_NoScrollbar |
+  ImGuiWindowFlags_NoDecoration)) {
+    render_input_ports(xform, in_port_coords);
+    ImGui::SameLine();
+    render_output_ports(xform, out_port_coords);
+
+  }
+  ImGui::EndChild();
+  ImGui::PopStyleVar(1);
+}
+
+void render_xform(const std::shared_ptr<XformGraph> &graph,
+                  const std::shared_ptr<const Xform> &xform,
+                  std::map<std::pair<std::string, std::string>, ImVec2> &in_port_coords,
+                  std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords
+) {
+  ImGui::Begin(xform->name().c_str(), nullptr,
+               ImGuiWindowFlags_NoResize |
+               ImGuiWindowFlags_AlwaysAutoResize |
+               ImGuiWindowFlags_NoCollapse
+  );
+  ImGui::SetWindowSize(ImVec2((float) 160, (float) 140));
+
+  render_ports(xform, in_port_coords, out_port_coords);
+
+
+  /*
+   * Image output
+   */
+  auto has_op = !xform->output_port_descriptors().empty();
+  if (has_op) {
+    if (ImGui::CollapsingHeader("Image", ImGuiTreeNodeFlags_None)) {
+      /* Add image */
+      auto op = graph->output_from(xform->name(), xform->output_port_descriptors().front()->name());
+      if (op) {
+        auto tx = (TextureMetadata *) op.get();
+        ImGui::Image((ImTextureID) (tx->texture_id), ImVec2(160, 120));
+      }
+    }
+  }
+  auto has_config = !xform->config().descriptors().empty();
+  if (has_config) {
+    if (ImGui::CollapsingHeader("Config", ImGuiTreeNodeFlags_None)) {
+      /* Add image */
+      for (const auto &pd: xform->config().descriptors())
+        ImGui::Text(pd.name.c_str());
+    }
+  }
+  ImGui::End();
+}
+
 void render_graph(const std::shared_ptr<XformGraph> &graph) {
   std::map<std::pair<std::string, std::string>, ImVec2> in_port_coords;
   std::map<std::pair<std::string, std::string>, ImVec2> out_port_coords;
 
   // For each node, make a box and add a name to it.
   for (const auto &xform: graph->xforms()) {
-    ImGui::Begin(xform->name().c_str(), nullptr,
-                 ImGuiWindowFlags_NoResize |
-                 ImGuiWindowFlags_AlwaysAutoResize |
-                 ImGuiWindowFlags_NoCollapse
-    );
-
-    ImGui::SetWindowSize(ImVec2((float) 160, (float) 140));
-    auto has_op = !xform->output_port_descriptors().empty();
-    if (has_op) {
-      if (ImGui::CollapsingHeader("Image", ImGuiTreeNodeFlags_None)) {
-        /* Add image */
-        auto op = graph->output_from(xform->name(), xform->output_port_descriptors().front()->name());
-        if (op) {
-          auto tx = (TextureMetadata *) op.get();
-          ImGui::Image((ImTextureID) (tx->texture_id), ImVec2(160, 120));
-        }
-      }
-    }
-    auto has_config = !xform->config().descriptors().empty();
-    if (has_config) {
-      if (ImGui::CollapsingHeader("Config", ImGuiTreeNodeFlags_None)) {
-        /* Add image */
-        for (const auto &pd: xform->config().descriptors())
-          ImGui::Text(pd.name.c_str());
-      }
-    }
-
-    /*
-     * Render inputs
-     */
-    auto num_inputs = xform->input_port_descriptors().size();
-    ImVec2 window_size = ImGui::GetWindowSize();
-    auto spacing = window_size.y / (float) (num_inputs + 1);
-    ImVec2 window_pos = ImGui::GetWindowPos();
-    ImVec2 port_pos = {window_pos.x, window_pos.y + spacing};
-    for (const auto &ipd: xform->input_port_descriptors()) {
-      ImGui::GetForegroundDrawList()->AddCircleFilled(port_pos,
-                                                      5.0f, IM_COL32(255, 0, 0, 255),
-                                                      0);
-      in_port_coords.emplace(std::make_pair(xform->name(), ipd->name()),
-                             port_pos);
-
-      auto sz = ImGui::CalcTextSize(ipd->name().c_str());
-      ImGui::GetForegroundDrawList()->AddText({port_pos.x + 5.0f, port_pos.y - sz.y * 0.5f}, IM_COL32_BLACK,
-                                              ipd->name().c_str());
-      port_pos.y += spacing;
-    }
-
-    /*
-     * Render outputs
-     */
-    auto num_outputs = xform->output_port_descriptors().size();
-    spacing = window_size.y / (float) (num_outputs + 1);
-    port_pos = {window_pos.x + window_size.x, window_pos.y + spacing};
-    for (const auto &opd: xform->output_port_descriptors()) {
-      ImGui::GetForegroundDrawList()->AddCircleFilled(port_pos,
-                                                      5.0f, IM_COL32(0, 255, 0, 255),
-                                                      0);
-      out_port_coords.emplace(std::make_pair(xform->name(), opd->name()),
-                              port_pos);
-      auto sz = ImGui::CalcTextSize(opd->name().c_str());
-      ImGui::GetForegroundDrawList()->AddText({window_pos.x + window_size.x - sz.x - 5.0f, port_pos.y - sz.y * 0.5f},
-                                              IM_COL32_BLACK, opd->name().c_str());
-      port_pos.y += spacing;
-    }
-
-    ImGui::End();
-//    ImGui::SetNextWindowPos();
-
+    render_xform(graph, xform, in_port_coords, out_port_coords);
   }
 
   /**
    * Render connections
    */
   for (const auto &conn: graph->connections()) {
-    ImVec2 from = out_port_coords.at(conn.first);
-    ImVec2 to = in_port_coords.at(conn.second);
-    auto midX = from.x + (to.x - from.x) / 2.0f;
-    ImGui::GetBackgroundDrawList()->AddBezierCubic(from,
-                                                   ImVec2(midX, from.y),
-                                                   ImVec2(midX, to.y),
-                                                   to,
-                                                   IM_COL32(80, 60, 0, 255), 2);
+    auto from_it = out_port_coords.find(conn.first);
+    auto to_it = in_port_coords.find(conn.second);
+    if (from_it != out_port_coords.end() && to_it != in_port_coords.end()) {
+
+      ImVec2 from = from_it->second;
+      ImVec2 to = to_it->second;
+      auto midX = from.x + (to.x - from.x) / 2.0f;
+      ImGui::GetBackgroundDrawList()->AddBezierCubic(from,
+                                                     ImVec2(midX, from.y),
+                                                     ImVec2(midX, to.y),
+                                                     to,
+                                                     IM_COL32(80, 60, 0, 255), 2);
+    }
   }
 }
 
