@@ -16,6 +16,8 @@
 
 #include "xforms/xform.h"
 
+#include <spdlog/spdlog-inl.h>
+
 #include <string>
 #include <map>
 #include <set>
@@ -54,6 +56,17 @@ public:
 
   std::shared_ptr<std::pair<std::string, std::string>>
   connection_to(const std::string &xform, const std::string &port) const;
+
+  bool is_connected(const InputPortDescriptor &ipd) const {
+    // TODO: Fix me
+    spdlog::critical("Xform::is_connected(<input>) Not implemented");
+    return false;
+  }
+  bool is_connected(const OutputPortDescriptor &opd) const {
+    // TODO: Fix me
+    spdlog::critical("Xform::is_connected(<output>) Not implemented");
+    return false;
+  }
 
   bool add_connection(const std::string &from_xform_name,
                       const std::string &from_port,
