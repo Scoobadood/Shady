@@ -313,12 +313,15 @@ void render_graph(const std::shared_ptr<XformGraph> &graph) {
 
   if (state.connecting) {//} ImGui::IsMouseDragging(ImGuiMouseButton_Left, 2)) {
     auto delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left, 2);
-    auto mid_x = 0.5f * (state.conn_position.x + delta.x);
-    ImGui::GetBackgroundDrawList()->AddBezierCubic(state.conn_position,
-                                                   ImVec2(mid_x, state.conn_position.y),
-                                                   ImVec2(mid_x, state.conn_position.y + delta.y),
-                                                   ImVec2(state.conn_position.x+delta.x, state.conn_position.y + delta.y),
-                                                   IM_COL32(128, 128, 128, 255), 2);
+    if (delta.x != 0.0 && delta.y != 0.0) {
+      ImVec2 to{state.conn_position.x + delta.x, state.conn_position.y + delta.y};
+      auto mid_x = state.conn_position.x + delta.x * 0.5f;
+      ImGui::GetBackgroundDrawList()->AddBezierCubic(state.conn_position,
+                                                     ImVec2(mid_x, state.conn_position.y),
+                                                     ImVec2(mid_x, to.y),
+                                                     to,
+                                                     IM_COL32(128, 128, 128, 255), 2);
+    }
   }
 }
 
