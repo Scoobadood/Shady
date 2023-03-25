@@ -19,6 +19,12 @@ ImVec4 g_out_port_bg_colour = ImColor(43, 43, 43, 255);
 ImColor g_conn_in_port_colour = ImColor(170, 230, 150, 255);
 ImColor g_conn_out_port_colour = ImColor(230, 170, 150, 255);
 
+struct State {
+  bool connecting = false;
+  std::string conn_xform;
+  std::shared_ptr<InputPortDescriptor> conn_ipd;
+  ImVec2 conn_position;
+};
 
 GLFWwindow *initgl() {
   glfwInit();
@@ -59,38 +65,53 @@ void render_input_ports(const std::string &xform_name,
                         const std::vector<std::shared_ptr<const InputPortDescriptor>> &input_port_descriptors,
                         const std::vector<bool> &is_connected,
                         std::map<std::pair<std::string, std::string>, ImVec2> &in_port_coords,
-                        int &current_selection) {
+                        int &current_selection,
+                        State &state) {
+
+  auto num_inputs = input_port_descriptors.size();
 
   // Compute some metrics
-  auto line_height = ImGui::GetTextLineHeightWithSpacing();
-  auto num_inputs = input_port_descriptors.size();
-  auto window_x = ImGui::GetWindowPos().x;
-  auto window_y = ImGui::GetWindowPos().y;
-  auto port_radius = 0.3f * line_height;
-  auto indent = (port_radius + 2.0f) * 3;
+  auto line_height = ImGui::GetTextLineHeight();
+  auto port_radius = 0.4f * line_height;
 
   ImGui::PushStyleColor(ImGuiCol_ChildBg, g_in_port_bg_colour);
-
-
   if (ImGui::BeginChild("##inputs", {ImGui::GetWindowWidth() * 0.5f, 0})) {
 
-    ImGui::Indent(indent);
     for (int ipd_idx = 0; ipd_idx < num_inputs; ipd_idx++) {
       const auto &ipd = input_port_descriptors.at(ipd_idx);
 
       const bool is_selected = (current_selection == ipd_idx);
       const bool is_port_connected = is_connected.at(ipd_idx);
 
-      /* Render the port */
-      auto port_pos = ImVec2{window_x + indent * 0.5f, window_y + (ipd_idx + 0.5f) * line_height};
-      if (is_port_connected) {
-        ImGui::GetWindowDrawList()->AddCircleFilled(port_pos,
-                                                    port_radius, g_conn_in_port_colour);
-      } else {
-        ImGui::GetWindowDrawList()->AddCircle(port_pos,
-                                              port_radius, g_conn_in_port_colour);
+      /* Render the port as an invisible button to prevent window dragging */
+      if (ImGui::BeginChild(ipd_idx + 1, {line_height, line_height},
+                            false,
+                            ImGuiWindowFlags_NoMove)) {
+
+        auto p1 = ImGui::GetWindowPos();
+        auto p2 = ImGui::GetWindowSize();
+        ImVec2 port_pos{p1.x + p2.x * 0.5f, p1.y + p2.y * 0.5f};
+
+        auto dl = ImGui::GetWindowDrawList();
+        if (is_port_connected) {
+          dl->AddCircleFilled(port_pos, port_radius, g_conn_in_port_colour);
+        } else {
+          dl->AddCircle(port_pos, port_radius, g_conn_in_port_colour);
+        }
+        in_port_coords.emplace(std::make_pair(xform_name, ipd->name()), port_pos);
+
+        /* Check for mousing in port */
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+          auto pos = ImGui::GetMousePos();
+          if (fabsf(pos.x - port_pos.x) < port_radius &&
+              fabsf(pos.y - port_pos.y) < port_radius) {
+            state.connecting = true;
+            state.conn_position = port_pos;
+          }
+        }
       }
-      in_port_coords.emplace(std::make_pair(xform_name, ipd->name()), port_pos);
+      ImGui::EndChild();
+      ImGui::SameLine(0, 0);
 
       // And the port name
       if (ImGui::Selectable(ipd->name().c_str(), is_selected)) {
@@ -102,11 +123,12 @@ void render_input_ports(const std::string &xform_name,
         ImGui::SetItemDefaultFocus();
       }
 
+      if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+        state.connecting = false;
+      }
     }
-    ImGui::Unindent(indent);
   }
   ImGui::EndChild();
-
   ImGui::PopStyleColor(1);
 }
 
@@ -117,15 +139,13 @@ void render_output_ports(const std::string &xform_name,
                          const std::vector<std::shared_ptr<const OutputPortDescriptor>> &output_port_descriptors,
                          const std::vector<bool> &is_connected,
                          std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords,
-                         int &current_selection) {
+                         int &current_selection,
+                         State &state) {
   auto num_outputs = output_port_descriptors.size();
 
   // Compute some metrics
-  auto line_height = ImGui::GetTextLineHeightWithSpacing();
-  auto window_r = ImGui::GetWindowPos().x + ImGui::GetWindowWidth();
-  auto window_y = ImGui::GetWindowPos().y;
-  auto port_radius = 0.3f * line_height;
-  auto indent = (port_radius + 2.0f) * 3;
+  auto line_height = ImGui::GetTextLineHeight();
+  auto port_radius = 0.4f * line_height;
 
   ImGui::PushStyleColor(ImGuiCol_ChildBg, g_out_port_bg_colour);
   ImGui::PushStyleColor(ImGuiCol_Border, g_xform_bg_colour);
@@ -138,17 +158,8 @@ void render_output_ports(const std::string &xform_name,
       const bool is_selected = (current_selection == opd_idx);
       const bool is_port_connected = is_connected.at(opd_idx);
 
-      /* Render the port */
-      auto port_pos = ImVec2{window_r - (indent * 0.5f), window_y + (opd_idx + 0.5f) * line_height};
-      if (is_port_connected) {
-        ImGui::GetWindowDrawList()->AddCircleFilled(port_pos, port_radius, g_conn_out_port_colour);
-      } else {
-        ImGui::GetWindowDrawList()->AddCircle(port_pos, port_radius, g_conn_out_port_colour);
-      }
-      out_port_coords.emplace(std::make_pair(xform_name, opd->name()), port_pos);
-
       if (ImGui::Selectable(opd->name().c_str(), is_selected, 0,
-                            {ImGui::GetWindowWidth() - indent, 0})) {
+                            {ImGui::GetWindowWidth() - line_height, 0})) {
         current_selection = opd_idx;
       }
 
@@ -156,6 +167,38 @@ void render_output_ports(const std::string &xform_name,
       if (is_selected) {
         ImGui::SetItemDefaultFocus();
       }
+
+      ImGui::SameLine(0, 0);
+
+      /* Render the port */
+      if (ImGui::BeginChild(opd_idx + 1,
+                            {line_height, line_height},
+                            false,
+                            ImGuiWindowFlags_NoMove)) {
+
+        auto p1 = ImGui::GetWindowPos();
+        auto p2 = ImGui::GetWindowSize();
+        ImVec2 port_pos{p1.x + p2.x * 0.5f, p1.y + p2.y * 0.5f};
+
+        auto dl = ImGui::GetWindowDrawList();
+        if (is_port_connected) {
+          dl->AddCircleFilled(port_pos, port_radius, g_conn_out_port_colour);
+        } else {
+          dl->AddCircle(port_pos, port_radius, g_conn_out_port_colour);
+        }
+        out_port_coords.emplace(std::make_pair(xform_name, opd->name()), port_pos);
+
+        /* Check for mousing in port */
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+          auto pos = ImGui::GetMousePos();
+          if (fabsf(pos.x - port_pos.x) < port_radius &&
+              fabsf(pos.y - port_pos.y) < port_radius) {
+            state.connecting = true;
+            state.conn_position = port_pos;
+          }
+        }
+      }
+      ImGui::EndChild();
     }
   }
   ImGui::EndChild();
@@ -168,7 +211,8 @@ void render_output_ports(const std::string &xform_name,
 void render_ports(const std::shared_ptr<XformGraph> &graph,
                   const std::shared_ptr<const Xform> &xform,
                   std::map<std::pair<std::string, std::string>, ImVec2> &in_port_coords,
-                  std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords
+                  std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords,
+                  State &state
 ) {
   auto num_input_ports = xform->input_port_descriptors().size();
   auto num_output_ports = xform->output_port_descriptors().size();
@@ -187,7 +231,7 @@ void render_ports(const std::shared_ptr<XformGraph> &graph,
     inputs_connected.push_back(graph->input_is_connected(xform->name(), ipd->name()));
   }
   render_input_ports(xform->name(), xform->input_port_descriptors(),
-                     inputs_connected, in_port_coords, selected_input);
+                     inputs_connected, in_port_coords, selected_input, state);
 
   ImGui::SameLine(0, 0);
 
@@ -200,7 +244,7 @@ void render_ports(const std::shared_ptr<XformGraph> &graph,
   }
 
   render_output_ports(xform->name(), xform->output_port_descriptors(),
-                      outputs_connected, out_port_coords, selected_output);
+                      outputs_connected, out_port_coords, selected_output, state);
   ImGui::EndChild();
 
 }
@@ -217,7 +261,8 @@ void render_ports(const std::shared_ptr<XformGraph> &graph,
 void render_xform(const std::shared_ptr<XformGraph> &graph,
                   const std::shared_ptr<const Xform> &xform,
                   std::map<std::pair<std::string, std::string>, ImVec2> &in_port_coords,
-                  std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords
+                  std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords,
+                  State &state
 ) {
   // TODO: Work out dynamic sizing later
   ImGui::SetNextWindowSize(ImVec2(190.0f, 0));
@@ -230,7 +275,7 @@ void render_xform(const std::shared_ptr<XformGraph> &graph,
                | ImGuiWindowFlags_NoCollapse
   );
 
-  render_ports(graph, xform, in_port_coords, out_port_coords);
+  render_ports(graph, xform, in_port_coords, out_port_coords, state);
 
   /* Image output - the selected output port is rendered */
   auto has_op = !xform->output_port_descriptors().empty();
@@ -271,17 +316,12 @@ void render_graph(const std::shared_ptr<XformGraph> &graph) {
   map<pair<string, string>, ImVec2> in_port_coords;
   map<pair<string, string>, ImVec2> out_port_coords;
 
-  static struct State {
-    bool connecting = false;
-    std::string conn_xform;
-    std::shared_ptr<InputPortDescriptor> conn_ipd;
-    ImVec2 conn_position;
-  } state;
+  static State state;
 
   /* For each xform in the graph, make a node
    */
   for (const auto &xform: graph->xforms()) {
-    render_xform(graph, xform, in_port_coords, out_port_coords);
+    render_xform(graph, xform, in_port_coords, out_port_coords, state);
   }
 
   /*
@@ -302,15 +342,7 @@ void render_graph(const std::shared_ptr<XformGraph> &graph) {
     }
   }
 
-  if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-    state.connecting = true;
-    state.conn_position = ImGui::GetMousePos();
-  }
-
-  if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-    state.connecting = false;
-  }
-
+  /* Handle rubber banding of new connections */
   if (state.connecting) {//} ImGui::IsMouseDragging(ImGuiMouseButton_Left, 2)) {
     auto delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left, 2);
     if (delta.x != 0.0 && delta.y != 0.0) {
