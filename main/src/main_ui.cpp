@@ -24,6 +24,7 @@ struct State {
   std::string conn_xform;
   std::shared_ptr<InputPortDescriptor> conn_ipd;
   ImVec2 conn_position;
+  std::map<std::string, int> selected_output;
 };
 
 GLFWwindow *initgl() {
@@ -64,12 +65,14 @@ void initImGui(GLFWwindow *window) {
  * Sized based on whether mouse is over
  * Handles mouse down and up
  */
-void render_a_port(int id, bool is_input, bool is_connected, float sz,
-                   State &state, ImVec2 &port_pos) {
+void render_port_connector(int id, bool is_input, bool is_connected,
+                           State &state, ImVec2 &port_pos) {
 
-  if (ImGui::BeginChild(id, {sz, sz}, false, ImGuiWindowFlags_NoMove)) {
+  auto line_height = ImGui::GetTextLineHeight();
 
-    auto port_radius = 0.3f * sz;
+  if (ImGui::BeginChild(id, {line_height, line_height}, false, ImGuiWindowFlags_NoMove)) {
+
+    auto port_radius = 0.3f * line_height;
     auto p1 = ImGui::GetWindowPos();
     auto p2 = ImGui::GetWindowSize();
     port_pos = {p1.x + p2.x * 0.5f, p1.y + p2.y * 0.5f};
@@ -101,7 +104,6 @@ void render_a_port(int id, bool is_input, bool is_connected, float sz,
       }
     }
 
-
     if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
       state.connecting = false;
     }
@@ -110,63 +112,63 @@ void render_a_port(int id, bool is_input, bool is_connected, float sz,
   ImGui::EndChild();
 }
 
+/*
+ *
+ */
+bool render_port_name(int id, const std::string &name, bool is_selected) {
+  bool selected = false;
+  auto line_height = ImGui::GetTextLineHeight();
+
+  if (ImGui::BeginChild(id, {-line_height, line_height})) {
+    if (is_selected) {
+      ImGui::PushStyleColor(ImGuiCol_Text, 0xffffffff);
+    }
+    ImGui::Text("%s", name.c_str());
+    if (is_selected) {
+      ImGui::PopStyleColor(1);
+    }
+
+    if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
+      selected = true;
+    }
+  }
+  ImGui::EndChild();
+  return selected;
+}
+
 
 /*
  * Render an input port
  */
-bool render_input_port(int ipd_idx,
+void render_input_port(int ipd_idx,
                        const std::shared_ptr<const InputPortDescriptor> &ipd,
-                       bool is_selected,
                        bool is_connected,
                        State &state,
                        ImVec2 &port_pos
 ) {
-  auto line_height = ImGui::GetTextLineHeight();
-
-  render_a_port(ipd_idx + 1, true, is_connected, line_height, state, port_pos);
+  render_port_connector(ipd_idx + 1, true, is_connected, state, port_pos);
 
   ImGui::SameLine(0, 0);
 
-  if( ImGui::BeginChild(ipd_idx+100,{-line_height, line_height} ) ) {
-    if (is_selected) {
-      ImGui::PushStyleColor(ImGuiCol_Text, 0xffffffff);
-    }
-    ImGui::Text("%s", ipd->name().c_str());
-    if (is_selected) {
-      ImGui::PopStyleColor(1);
-    }
-  }
-  ImGui::EndChild();
-  return false;
+  render_port_name(ipd_idx + 100, ipd->name(), false);
 }
 
 /*
  * Render an output port
  */
 bool render_output_port(int opd_idx,
-                       const std::shared_ptr<const OutputPortDescriptor> &opd,
-                       bool is_selected,
-                       bool is_connected,
-                       State &state,
-                       ImVec2 &port_pos
+                        const std::shared_ptr<const OutputPortDescriptor> &opd,
+                        bool is_selected,
+                        bool is_connected,
+                        State &state,
+                        ImVec2 &port_pos
 ) {
-  auto line_height = ImGui::GetTextLineHeight();
-
-  if( ImGui::BeginChild(opd_idx+100,{-line_height, line_height} ) ) {
-    if (is_selected) {
-      ImGui::PushStyleColor(ImGuiCol_Text, 0xffffffff);
-    }
-    ImGui::Text("%s", opd->name().c_str());
-    if (is_selected) {
-      ImGui::PopStyleColor(1);
-    }
-  }
-  ImGui::EndChild();
+  bool selected = render_port_name(opd_idx + 100, opd->name(), is_selected);
 
   ImGui::SameLine(0, 0);
 
-  render_a_port(opd_idx + 1, false, is_connected, line_height, state, port_pos);
-  return false;
+  render_port_connector(opd_idx + 1, false, is_connected, state, port_pos);
+  return selected;
 }
 
 
@@ -177,7 +179,6 @@ void render_input_ports(const std::string &xform_name,
                         const std::vector<std::shared_ptr<const InputPortDescriptor>> &input_port_descriptors,
                         const std::vector<bool> &is_connected,
                         std::map<std::pair<std::string, std::string>, ImVec2> &in_port_coords,
-                        int &current_selection,
                         State &state) {
 
   auto num_inputs = input_port_descriptors.size();
@@ -188,13 +189,10 @@ void render_input_ports(const std::string &xform_name,
     for (int ipd_idx = 0; ipd_idx < num_inputs; ipd_idx++) {
       const auto &ipd = input_port_descriptors.at(ipd_idx);
 
-      const bool is_selected = (current_selection == ipd_idx);
       const bool is_port_connected = is_connected.at(ipd_idx);
 
       ImVec2 port_pos;
-      if( render_input_port(ipd_idx, ipd, is_selected, is_port_connected, state, port_pos) ) {
-        current_selection = ipd_idx;
-      }
+      render_input_port(ipd_idx, ipd, is_port_connected, state, port_pos);
       in_port_coords.emplace(std::make_pair(xform_name, ipd->name()), port_pos);
     }
   }
@@ -209,12 +207,13 @@ void render_output_ports(const std::string &xform_name,
                          const std::vector<std::shared_ptr<const OutputPortDescriptor>> &output_port_descriptors,
                          const std::vector<bool> &is_connected,
                          std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords,
-                         int &current_selection,
                          State &state) {
   auto num_outputs = output_port_descriptors.size();
 
   ImGui::PushStyleColor(ImGuiCol_ChildBg, g_out_port_bg_colour);
   ImGui::PushStyleColor(ImGuiCol_Border, g_xform_bg_colour);
+
+  int & current_selection = state.selected_output[xform_name];
 
   if (ImGui::BeginChild("##outputs", {ImGui::GetWindowWidth() * 0.5f, 0})) {
 
@@ -225,7 +224,7 @@ void render_output_ports(const std::string &xform_name,
       const bool is_port_connected = is_connected.at(opd_idx);
 
       ImVec2 port_pos;
-      if(render_output_port(opd_idx, opd, is_selected, is_port_connected, state, port_pos)) {
+      if (render_output_port(opd_idx, opd, is_selected, is_port_connected, state, port_pos)) {
         current_selection = opd_idx;
       }
       out_port_coords.emplace(std::make_pair(xform_name, opd->name()), port_pos);
@@ -253,19 +252,16 @@ void render_ports(const std::shared_ptr<XformGraph> &graph,
 
   ImGui::BeginChild("##ports", {0, height}, true);
 
-  int selected_input = 0;
   std::vector<bool> inputs_connected;
   inputs_connected.reserve(num_input_ports);
   for (auto ip_idx = 0; ip_idx < num_input_ports; ++ip_idx) {
     auto ipd = xform->input_port_descriptors().at(ip_idx);
     inputs_connected.push_back(graph->input_is_connected(xform->name(), ipd->name()));
   }
-  render_input_ports(xform->name(), xform->input_port_descriptors(),
-                     inputs_connected, in_port_coords, selected_input, state);
+  render_input_ports(xform->name(), xform->input_port_descriptors(), inputs_connected, in_port_coords, state);
 
   ImGui::SameLine(0, 0);
 
-  int selected_output = 0;
   std::vector<bool> outputs_connected;
   outputs_connected.reserve(num_output_ports);
   for (auto op_idx = 0; op_idx < num_output_ports; ++op_idx) {
@@ -273,8 +269,7 @@ void render_ports(const std::shared_ptr<XformGraph> &graph,
     outputs_connected.push_back(graph->output_is_connected(xform->name(), opd->name()));
   }
 
-  render_output_ports(xform->name(), xform->output_port_descriptors(),
-                      outputs_connected, out_port_coords, selected_output, state);
+  render_output_ports(xform->name(), xform->output_port_descriptors(),outputs_connected, out_port_coords, state);
   ImGui::EndChild();
 
 }
