@@ -20,11 +20,27 @@ ImColor g_conn_in_port_colour = ImColor(170, 230, 150, 255);
 ImColor g_conn_out_port_colour = ImColor(230, 170, 150, 255);
 
 struct State {
-  bool connecting = false;
-  std::string conn_xform;
-  std::shared_ptr<InputPortDescriptor> conn_ipd;
+  std::shared_ptr<XformGraph> graph;
+
+  /* Only set if we are actively connecting */
+  std::shared_ptr<const Xform> connecting_xform;
+  std::shared_ptr<const InputPortDescriptor> connecting_input;
+  std::shared_ptr<const OutputPortDescriptor> connecting_output;
   ImVec2 conn_position;
+
+  /* Currently selected output port index for each xform */
   std::map<std::string, int> selected_output;
+
+  inline bool is_connecting() const {
+    return connecting_input || connecting_output;
+  }
+};
+
+struct XformRenderContext {
+  std::shared_ptr<const Xform> xform;
+  std::shared_ptr<const InputPortDescriptor> input_port;
+  std::shared_ptr<const OutputPortDescriptor> output_port;
+  ImVec2 port_pos;
 };
 
 GLFWwindow *initgl() {
@@ -59,14 +75,25 @@ void initImGui(GLFWwindow *window) {
   ImGui_ImplOpenGL3_Init(glsl_version);
 }
 
+bool is_mouse_over_port(const ImVec2 &mouse_pos,
+                        const ImVec2 &port_pos,
+                        float port_radius) {
+  if (fabsf(mouse_pos.x - port_pos.x) > port_radius) return false;
+  if (fabsf(mouse_pos.y - port_pos.y) > port_radius) return false;
+  return true;
+}
+
 /* Render a port
  * Coloured according to whether it's an input or output
  * Filled according to whether its connected or not
  * Sized based on whether mouse is over
  * Handles mouse down and up
  */
-void render_port_connector(int id, bool is_input, bool is_connected,
-                           State &state, ImVec2 &port_pos) {
+void render_port_connector(int id, bool is_input,
+                           bool is_connected,
+                           bool connect_compatible,
+                           XformRenderContext &context,
+                           State &state) {
 
   auto line_height = ImGui::GetTextLineHeight();
 
@@ -75,37 +102,101 @@ void render_port_connector(int id, bool is_input, bool is_connected,
     auto port_radius = 0.3f * line_height;
     auto p1 = ImGui::GetWindowPos();
     auto p2 = ImGui::GetWindowSize();
-    port_pos = {p1.x + p2.x * 0.5f, p1.y + p2.y * 0.5f};
+    context.port_pos = {p1.x + p2.x * 0.5f, p1.y + p2.y * 0.5f};
 
-    //
+    // Determine colour, size and shape of port connector
     auto pos = ImGui::GetMousePos();
-    float scale = 1.0f;
-    if (fabsf(pos.x - port_pos.x) < port_radius &&
-        fabsf(pos.y - port_pos.y) < port_radius) {
-      scale = 1.2f;
+    bool over_port = is_mouse_over_port(pos, context.port_pos, port_radius);
+
+    /*
+     * 0 == small open circle
+     * 1 == large open circle
+     * 2 == small filled circle
+     * 3 == large filled circle
+     * 4 == cross
+     */
+    int shape;
+    ImColor colour;
+    if (over_port && state.is_connecting()) {
+      if (connect_compatible) {
+        colour = is_input ? g_conn_in_port_colour : g_conn_out_port_colour;
+        shape = is_connected ? 3 : 1;
+      } else {
+        colour = 0xffffffff;
+        shape = 4;
+      }
+    } else if (over_port) {
+      colour = is_input ? g_conn_in_port_colour : g_conn_out_port_colour;
+      shape = is_connected ? 3 : 1;
+    } else {
+      colour = is_input ? g_conn_in_port_colour : g_conn_out_port_colour;
+      shape = is_connected ? 2 : 0;
     }
 
+
     auto dl = ImGui::GetWindowDrawList();
-    auto col = is_input ? g_conn_in_port_colour : g_conn_out_port_colour;
-    if (is_connected) {
-      dl->AddCircleFilled(port_pos, port_radius * scale, col);
-    } else {
-      dl->AddCircle(port_pos, port_radius * scale, col);
+    switch (shape) {
+      case 0:
+        dl->AddCircle(context.port_pos, port_radius, colour);
+        break;
+      case 1:
+        dl->AddCircle(context.port_pos, port_radius * 1.2f, colour);
+        break;
+      case 2:
+        dl->AddCircleFilled(context.port_pos, port_radius, colour);
+        break;
+      case 3:
+        dl->AddCircleFilled(context.port_pos, port_radius * 1.2f, colour);
+        break;
+      case 4:
+        dl->AddLine({context.port_pos.x - port_radius, context.port_pos.y - port_radius},
+                    {context.port_pos.x + port_radius, context.port_pos.y + port_radius},
+                    colour);
+        dl->AddLine({context.port_pos.x - port_radius, context.port_pos.y + port_radius},
+                    {context.port_pos.x + port_radius, context.port_pos.y - port_radius},
+                    colour);
+        break;
     }
 
     /*
      * Check for mouse down in port
      */
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-      if (fabsf(pos.x - port_pos.x) < port_radius &&
-          fabsf(pos.y - port_pos.y) < port_radius) {
-        state.connecting = true;
-        state.conn_position = port_pos;
+      if (over_port) {
+        state.connecting_xform = context.xform;
+        state.conn_position = context.port_pos;
+        if (is_input) {
+          state.connecting_input = context.input_port;
+        } else {
+          state.connecting_output = context.output_port;
+        }
       }
     }
 
     if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-      state.connecting = false;
+      if (over_port) {
+        if (connect_compatible) {
+          // Do the connection.
+          if (is_input) {
+            state.graph->add_connection(
+                    state.connecting_xform->name(),
+                    state.connecting_output->name(),
+                    context.xform->name(),
+                    context.input_port->name()
+            );
+          } else {
+            state.graph->add_connection(
+                    context.xform->name(),
+                    context.output_port->name(),
+                    state.connecting_xform->name(),
+                    state.connecting_output->name()
+            );
+          }
+        }
+        state.connecting_xform = nullptr;
+        state.connecting_input = nullptr;
+        state.connecting_output = nullptr;
+      }
     }
 
   }
@@ -136,38 +227,51 @@ bool render_port_name(int id, const std::string &name, bool is_selected) {
   return selected;
 }
 
+bool can_connect(const State &state, const std::shared_ptr<const InputPortDescriptor> &ipd) {
+  if (!state.connecting_output) return false;
+  return ipd->is_compatible(*state.connecting_output);
+}
+
+bool can_connect(const State &state, const std::shared_ptr<const OutputPortDescriptor> &opd) {
+  if (!state.connecting_input) return false;
+  return state.connecting_input->is_compatible(*opd);
+}
 
 /*
  * Render an input port
  */
 void render_input_port(int ipd_idx,
-                       const std::shared_ptr<const InputPortDescriptor> &ipd,
                        bool is_connected,
-                       State &state,
-                       ImVec2 &port_pos
+                       XformRenderContext &context,
+                       State &state
 ) {
-  render_port_connector(ipd_idx + 1, true, is_connected, state, port_pos);
+  bool connect_compatible = can_connect(state, context.input_port);
+  render_port_connector(ipd_idx + 1, true, is_connected,
+                        connect_compatible, context, state);
 
   ImGui::SameLine(0, 0);
 
-  render_port_name(ipd_idx + 100, ipd->name(), false);
+  render_port_name(ipd_idx + 100, context.input_port->name(), false);
 }
 
 /*
  * Render an output port
  */
 bool render_output_port(int opd_idx,
-                        const std::shared_ptr<const OutputPortDescriptor> &opd,
                         bool is_selected,
                         bool is_connected,
-                        State &state,
-                        ImVec2 &port_pos
+                        XformRenderContext &context,
+                        State &state
 ) {
-  bool selected = render_port_name(opd_idx + 100, opd->name(), is_selected);
+  bool connect_compatible = can_connect(state, context.output_port);
+  bool selected = render_port_name(opd_idx + 100, context.output_port->name(), is_selected);
 
   ImGui::SameLine(0, 0);
 
-  render_port_connector(opd_idx + 1, false, is_connected, state, port_pos);
+  render_port_connector(opd_idx + 1, false, is_connected,
+                        connect_compatible,
+                        context,
+                        state);
   return selected;
 }
 
@@ -175,25 +279,29 @@ bool render_output_port(int opd_idx,
 /*
  * Render input ports for a specific Xform
  */
-void render_input_ports(const std::string &xform_name,
-                        const std::vector<std::shared_ptr<const InputPortDescriptor>> &input_port_descriptors,
+void render_input_ports(const std::shared_ptr<const Xform> &xform,
                         const std::vector<bool> &is_connected,
                         std::map<std::pair<std::string, std::string>, ImVec2> &in_port_coords,
                         State &state) {
 
-  auto num_inputs = input_port_descriptors.size();
+
+  auto port_descriptors = xform->input_port_descriptors();
+  auto num_inputs = port_descriptors.size();
+
+  XformRenderContext context{xform, nullptr, nullptr};
 
   ImGui::PushStyleColor(ImGuiCol_ChildBg, g_in_port_bg_colour);
   if (ImGui::BeginChild("##inputs", {ImGui::GetWindowWidth() * 0.5f, 0})) {
 
     for (int ipd_idx = 0; ipd_idx < num_inputs; ipd_idx++) {
-      const auto &ipd = input_port_descriptors.at(ipd_idx);
+      context.input_port = port_descriptors.at(ipd_idx);
 
       const bool is_port_connected = is_connected.at(ipd_idx);
 
-      ImVec2 port_pos;
-      render_input_port(ipd_idx, ipd, is_port_connected, state, port_pos);
-      in_port_coords.emplace(std::make_pair(xform_name, ipd->name()), port_pos);
+      render_input_port(ipd_idx, is_port_connected, context, state);
+      in_port_coords.emplace(std::make_pair(context.xform->name(),
+                                            context.input_port->name()),
+                             context.port_pos);
     }
   }
   ImGui::EndChild();
@@ -203,31 +311,33 @@ void render_input_ports(const std::string &xform_name,
 /*
  * Render input ports for a specific Xform
  */
-void render_output_ports(const std::string &xform_name,
-                         const std::vector<std::shared_ptr<const OutputPortDescriptor>> &output_port_descriptors,
+void render_output_ports(const std::shared_ptr<const Xform> &xform,
                          const std::vector<bool> &is_connected,
                          std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords,
                          State &state) {
-  auto num_outputs = output_port_descriptors.size();
+
+  auto port_descriptors = xform->output_port_descriptors();
+  auto num_outputs = port_descriptors.size();
 
   ImGui::PushStyleColor(ImGuiCol_ChildBg, g_out_port_bg_colour);
   ImGui::PushStyleColor(ImGuiCol_Border, g_xform_bg_colour);
 
-  int & current_selection = state.selected_output[xform_name];
+  XformRenderContext context{xform, nullptr, nullptr};
+
+  int &current_selection = state.selected_output[xform->name()];
 
   if (ImGui::BeginChild("##outputs", {ImGui::GetWindowWidth() * 0.5f, 0})) {
 
     for (int opd_idx = 0; opd_idx < num_outputs; opd_idx++) {
-      const auto &opd = output_port_descriptors.at(opd_idx);
+      context.output_port = port_descriptors.at(opd_idx);
 
       const bool is_selected = (current_selection == opd_idx);
       const bool is_port_connected = is_connected.at(opd_idx);
 
-      ImVec2 port_pos;
-      if (render_output_port(opd_idx, opd, is_selected, is_port_connected, state, port_pos)) {
+      if (render_output_port(opd_idx, is_selected, is_port_connected, context, state)) {
         current_selection = opd_idx;
       }
-      out_port_coords.emplace(std::make_pair(xform_name, opd->name()), port_pos);
+      out_port_coords.emplace(std::make_pair(xform->name(), context.output_port->name()), context.port_pos);
     }
   }
   ImGui::EndChild();
@@ -258,7 +368,7 @@ void render_ports(const std::shared_ptr<XformGraph> &graph,
     auto ipd = xform->input_port_descriptors().at(ip_idx);
     inputs_connected.push_back(graph->input_is_connected(xform->name(), ipd->name()));
   }
-  render_input_ports(xform->name(), xform->input_port_descriptors(), inputs_connected, in_port_coords, state);
+  render_input_ports(xform, inputs_connected, in_port_coords, state);
 
   ImGui::SameLine(0, 0);
 
@@ -269,7 +379,7 @@ void render_ports(const std::shared_ptr<XformGraph> &graph,
     outputs_connected.push_back(graph->output_is_connected(xform->name(), opd->name()));
   }
 
-  render_output_ports(xform->name(), xform->output_port_descriptors(),outputs_connected, out_port_coords, state);
+  render_output_ports(xform, outputs_connected, out_port_coords, state);
   ImGui::EndChild();
 
 }
@@ -330,7 +440,7 @@ void render_xform(const std::shared_ptr<XformGraph> &graph,
 /*
  * Render the graph by rendering the nodes.
  */
-void render_graph(const std::shared_ptr<XformGraph> &graph) {
+void render_graph(State &state) {
   using namespace std;
 
   /*
@@ -341,18 +451,16 @@ void render_graph(const std::shared_ptr<XformGraph> &graph) {
   map<pair<string, string>, ImVec2> in_port_coords;
   map<pair<string, string>, ImVec2> out_port_coords;
 
-  static State state;
-
   /* For each xform in the graph, make a node
    */
-  for (const auto &xform: graph->xforms()) {
-    render_xform(graph, xform, in_port_coords, out_port_coords, state);
+  for (const auto &xform: state.graph->xforms()) {
+    render_xform(state.graph, xform, in_port_coords, out_port_coords, state);
   }
 
   /*
    * Render connections between the nodes
    */
-  for (const auto &conn: graph->connections()) {
+  for (const auto &conn: state.graph->connections()) {
     auto from_it = out_port_coords.find(conn.first);
     auto to_it = in_port_coords.find(conn.second);
     if (from_it != out_port_coords.end() && to_it != in_port_coords.end()) {
@@ -368,7 +476,7 @@ void render_graph(const std::shared_ptr<XformGraph> &graph) {
   }
 
   /* Handle rubber banding of new connections */
-  if (state.connecting) {//} ImGui::IsMouseDragging(ImGuiMouseButton_Left, 2)) {
+  if (state.is_connecting()) {//} ImGui::IsMouseDragging(ImGuiMouseButton_Left, 2)) {
     auto delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left, 2);
     if (delta.x != 0.0 && delta.y != 0.0) {
       ImVec2 to{state.conn_position.x + delta.x, state.conn_position.y + delta.y};
@@ -407,14 +515,16 @@ char **get_graph_file_names(uint32_t &num_files) {
   return nullptr;
 }
 
-void do_menus(std::shared_ptr<XformGraph> &graph, bool &open_graph_menu_open) {
+void do_menus(bool &open_graph_menu_open, State & state) {
   if (ImGui::BeginMainMenuBar()) {
     if (ImGui::BeginMenu("Graph")) {
       if (ImGui::MenuItem("Open...", "Ctrl+O")) {
         open_graph_menu_open = true;
       }
       if (ImGui::MenuItem("Save", "Ctrl+S")) { /* Do stuff */ }
-      if (ImGui::MenuItem("Close", "Ctrl+W")) { graph = nullptr; }
+      if (ImGui::MenuItem("Close", "Ctrl+W")) {
+        state.graph = nullptr;
+      }
       ImGui::EndMenu();
     }
     ImGui::EndMainMenuBar();
@@ -424,8 +534,12 @@ void do_menus(std::shared_ptr<XformGraph> &graph, bool &open_graph_menu_open) {
     ImGui::OpenPopup("XXX");
 
   if (ImGui::BeginPopupModal("XXX")) {
+    state.connecting_input = nullptr;
+    state.connecting_output = nullptr;
+    state.connecting_xform = nullptr;
+
+
     ImGui::Text("Open a graph");
-    // Testing behavior of widgets stacking their own regular popups over the modal.
     static int selected_item = 0;
     uint32_t num_graph_files;
     auto graph_file_names = get_graph_file_names(num_graph_files);
@@ -443,9 +557,10 @@ void do_menus(std::shared_ptr<XformGraph> &graph, bool &open_graph_menu_open) {
     if (ImGui::Button("Open")) {
       open_graph_menu_open = false;
       if (graph_file_names) {
-        graph = load_graph(graph_file_names[selected_item]);
+        auto graph = load_graph(graph_file_names[selected_item]);
         if (graph) {
-          graph->evaluate();
+          state.graph = graph;
+          state.graph->evaluate();
           ImGui::CloseCurrentPopup();
         }
       }
@@ -485,10 +600,12 @@ int main(int argc, const char *argv[]) {
   initImGui(glfw_window);
 
   // State
-  std::shared_ptr<XformGraph> graph = nullptr;
+  State state;
+
+  state.graph = nullptr;
   bool open_graph_menu_open = false;
   if (argc == 2) {
-    graph = load_graph(argv[1]);
+    state.graph = load_graph(argv[1]);
   }
 
   // Loop forever
@@ -507,16 +624,18 @@ int main(int argc, const char *argv[]) {
     ImGui::NewFrame();
 
     // If there's a graph, render it.
-    if (graph) {
-      render_graph(graph);
+    if (state.graph) {
+      render_graph(state);
     }
 
     /* Menus */
-    do_menus(graph, open_graph_menu_open);
+    do_menus( open_graph_menu_open, state);
 
     /* UI Tweaking */
-    if (ImGui::Begin("Controls")) {
-      ImGui::SliderFloat("rounding", &g_rounding, 0.0, 10);
+    if (ImGui::Begin("State")) {
+      ImGui::Text("Connecting output : %s", state.connecting_output ? state.connecting_output->name().c_str() : "null");
+      ImGui::Text("Connecting input : %s", state.connecting_input ? state.connecting_input->name().c_str() : "null");
+      ImGui::Text("Connecting xform : %s", state.connecting_xform ? state.connecting_xform->name().c_str() : "null");
     }
     ImGui::End();
 
