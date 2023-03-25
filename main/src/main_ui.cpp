@@ -58,6 +58,46 @@ void initImGui(GLFWwindow *window) {
   ImGui_ImplOpenGL3_Init(glsl_version);
 }
 
+/* Render the port */
+void render_a_port(int id, bool is_input, bool is_connected, float sz,
+                   State & state, ImVec2 &port_pos) {
+
+  if (ImGui::BeginChild(id, {sz, sz},
+                        false,
+                        ImGuiWindowFlags_NoMove)) {
+
+    auto port_radius = 0.3f * sz;
+    auto p1 = ImGui::GetWindowPos();
+    auto p2 = ImGui::GetWindowSize();
+    port_pos = {p1.x + p2.x * 0.5f, p1.y + p2.y * 0.5f};
+
+    auto pos = ImGui::GetMousePos();
+    float scale = 1.0f;
+    if (fabsf(pos.x - port_pos.x) < port_radius &&
+        fabsf(pos.y - port_pos.y) < port_radius) {
+      scale = 1.2f;
+    }
+
+    auto dl = ImGui::GetWindowDrawList();
+    auto col = is_input ? g_conn_in_port_colour : g_conn_out_port_colour;
+    if (is_connected) {
+      dl->AddCircleFilled(port_pos, port_radius * scale, col);
+    } else {
+      dl->AddCircle(port_pos, port_radius * scale, col);
+    }
+
+    /* Check for mousing in port */
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+      if (fabsf(pos.x - port_pos.x) < port_radius &&
+          fabsf(pos.y - port_pos.y) < port_radius) {
+        state.connecting = true;
+        state.conn_position = port_pos;
+      }
+    }
+  }
+  ImGui::EndChild();
+}
+
 /*
  * Render input ports for a specific Xform
  */
@@ -72,7 +112,7 @@ void render_input_ports(const std::string &xform_name,
 
   // Compute some metrics
   auto line_height = ImGui::GetTextLineHeight();
-  auto port_radius = 0.4f * line_height;
+  auto port_radius = 0.3f * line_height;
 
   ImGui::PushStyleColor(ImGuiCol_ChildBg, g_in_port_bg_colour);
   if (ImGui::BeginChild("##inputs", {ImGui::GetWindowWidth() * 0.5f, 0})) {
@@ -84,33 +124,10 @@ void render_input_ports(const std::string &xform_name,
       const bool is_port_connected = is_connected.at(ipd_idx);
 
       /* Render the port as an invisible button to prevent window dragging */
-      if (ImGui::BeginChild(ipd_idx + 1, {line_height, line_height},
-                            false,
-                            ImGuiWindowFlags_NoMove)) {
+      ImVec2 port_pos;
+      render_a_port(ipd_idx+1, true, is_port_connected, line_height, state, port_pos);
+      in_port_coords.emplace(std::make_pair(xform_name, ipd->name()), port_pos);
 
-        auto p1 = ImGui::GetWindowPos();
-        auto p2 = ImGui::GetWindowSize();
-        ImVec2 port_pos{p1.x + p2.x * 0.5f, p1.y + p2.y * 0.5f};
-
-        auto dl = ImGui::GetWindowDrawList();
-        if (is_port_connected) {
-          dl->AddCircleFilled(port_pos, port_radius, g_conn_in_port_colour);
-        } else {
-          dl->AddCircle(port_pos, port_radius, g_conn_in_port_colour);
-        }
-        in_port_coords.emplace(std::make_pair(xform_name, ipd->name()), port_pos);
-
-        /* Check for mousing in port */
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-          auto pos = ImGui::GetMousePos();
-          if (fabsf(pos.x - port_pos.x) < port_radius &&
-              fabsf(pos.y - port_pos.y) < port_radius) {
-            state.connecting = true;
-            state.conn_position = port_pos;
-          }
-        }
-      }
-      ImGui::EndChild();
       ImGui::SameLine(0, 0);
 
       // And the port name
@@ -171,34 +188,9 @@ void render_output_ports(const std::string &xform_name,
       ImGui::SameLine(0, 0);
 
       /* Render the port */
-      if (ImGui::BeginChild(opd_idx + 1,
-                            {line_height, line_height},
-                            false,
-                            ImGuiWindowFlags_NoMove)) {
-
-        auto p1 = ImGui::GetWindowPos();
-        auto p2 = ImGui::GetWindowSize();
-        ImVec2 port_pos{p1.x + p2.x * 0.5f, p1.y + p2.y * 0.5f};
-
-        auto dl = ImGui::GetWindowDrawList();
-        if (is_port_connected) {
-          dl->AddCircleFilled(port_pos, port_radius, g_conn_out_port_colour);
-        } else {
-          dl->AddCircle(port_pos, port_radius, g_conn_out_port_colour);
-        }
-        out_port_coords.emplace(std::make_pair(xform_name, opd->name()), port_pos);
-
-        /* Check for mousing in port */
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-          auto pos = ImGui::GetMousePos();
-          if (fabsf(pos.x - port_pos.x) < port_radius &&
-              fabsf(pos.y - port_pos.y) < port_radius) {
-            state.connecting = true;
-            state.conn_position = port_pos;
-          }
-        }
-      }
-      ImGui::EndChild();
+      ImVec2 port_pos;
+      render_a_port(opd_idx+1, false, is_port_connected, line_height, state, port_pos);
+      out_port_coords.emplace(std::make_pair(xform_name, opd->name()), port_pos);
     }
   }
   ImGui::EndChild();
