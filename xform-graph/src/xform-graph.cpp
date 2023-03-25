@@ -278,3 +278,13 @@ XformGraph::connection_to(const std::string &xform, const std::string &port) con
   if (it == connections_to_.end()) return nullptr;
   return std::make_shared<std::pair<std::string, std::string>>(it->second);
 }
+
+bool XformGraph::input_is_connected(const std::string &xform, const std::string &port) const{
+  auto iter = connections_to_.find({xform, port});
+  return !( iter == connections_to_.end());
+}
+
+bool XformGraph::output_is_connected(const std::string &xform, const std::string &port) const{
+  auto iter = connections_from_.find({xform, port});
+  return !( iter == connections_from_.end());
+}

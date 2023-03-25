@@ -140,16 +140,16 @@ void render_output_ports(const std::string &xform_name,
       const bool is_port_connected = is_connected.at(opd_idx);
 
       /* Render the port */
-      auto port_pos = ImVec2{window_r - (indent*0.5f), window_y + (opd_idx + 0.5f) * line_height};
+      auto port_pos = ImVec2{window_r - (indent * 0.5f), window_y + (opd_idx + 0.5f) * line_height};
       if (is_port_connected) {
-        ImGui::GetWindowDrawList()->AddCircleFilled(port_pos,port_radius, g_conn_out_port_colour);
+        ImGui::GetWindowDrawList()->AddCircleFilled(port_pos, port_radius, g_conn_out_port_colour);
       } else {
-        ImGui::GetWindowDrawList()->AddCircle(port_pos,port_radius, g_conn_out_port_colour);
+        ImGui::GetWindowDrawList()->AddCircle(port_pos, port_radius, g_conn_out_port_colour);
       }
       out_port_coords.emplace(std::make_pair(xform_name, opd->name()), port_pos);
 
       if (ImGui::Selectable(opd->name().c_str(), is_selected, 0,
-                            {ImGui::GetWindowWidth() - indent,0 })) {
+                            {ImGui::GetWindowWidth() - indent, 0})) {
         current_selection = opd_idx;
       }
 
@@ -181,21 +181,23 @@ void render_ports(const std::shared_ptr<XformGraph> &graph,
   ImGui::BeginChild("##ports", {0, height}, true);
 
   int selected_input = 0;
-  std::vector<bool> inputs_connected(xform->input_port_descriptors().size(), false);
+  std::vector<bool> inputs_connected;
+  inputs_connected.reserve(num_input_ports);
   for (auto ip_idx = 0; ip_idx < num_input_ports; ++ip_idx) {
     auto ipd = xform->input_port_descriptors().at(ip_idx);
-    inputs_connected.push_back(graph->is_connected(*ipd));
+    inputs_connected.push_back(graph->input_is_connected(xform->name(), ipd->name()));
   }
   render_input_ports(xform->name(), xform->input_port_descriptors(),
                      inputs_connected, in_port_coords, selected_input);
 
-  ImGui::SameLine(0,0);
+  ImGui::SameLine(0, 0);
 
   int selected_output = 0;
-  std::vector<bool> outputs_connected(xform->output_port_descriptors().size(), false);
+  std::vector<bool> outputs_connected;
+  outputs_connected.reserve(num_output_ports);
   for (auto op_idx = 0; op_idx < num_output_ports; ++op_idx) {
     auto opd = xform->output_port_descriptors().at(op_idx);
-    outputs_connected.push_back(graph->is_connected(*opd));
+    outputs_connected.push_back(graph->output_is_connected(xform->name(), opd->name()));
   }
 
   render_output_ports(xform->name(), xform->output_port_descriptors(),

@@ -57,15 +57,9 @@ public:
   std::shared_ptr<std::pair<std::string, std::string>>
   connection_to(const std::string &xform, const std::string &port) const;
 
-  bool is_connected(const InputPortDescriptor &ipd) const {
-    // TODO: Fix me
-    return false;
-  }
+  bool input_is_connected(const std::string &xform, const std::string &port) const;
 
-  bool is_connected(const OutputPortDescriptor &opd) const {
-    // TODO: Fix me
-    return false;
-  }
+  bool output_is_connected(const std::string &xform, const std::string &port) const;
 
   bool add_connection(const std::string &from_xform_name,
                       const std::string &from_port,
