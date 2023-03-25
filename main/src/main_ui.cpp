@@ -58,19 +58,23 @@ void initImGui(GLFWwindow *window) {
   ImGui_ImplOpenGL3_Init(glsl_version);
 }
 
-/* Render the port */
+/* Render a port
+ * Coloured according to whether it's an input or output
+ * Filled according to whether its connected or not
+ * Sized based on whether mouse is over
+ * Handles mouse down and up
+ */
 void render_a_port(int id, bool is_input, bool is_connected, float sz,
-                   State & state, ImVec2 &port_pos) {
+                   State &state, ImVec2 &port_pos) {
 
-  if (ImGui::BeginChild(id, {sz, sz},
-                        false,
-                        ImGuiWindowFlags_NoMove)) {
+  if (ImGui::BeginChild(id, {sz, sz}, false, ImGuiWindowFlags_NoMove)) {
 
     auto port_radius = 0.3f * sz;
     auto p1 = ImGui::GetWindowPos();
     auto p2 = ImGui::GetWindowSize();
     port_pos = {p1.x + p2.x * 0.5f, p1.y + p2.y * 0.5f};
 
+    //
     auto pos = ImGui::GetMousePos();
     float scale = 1.0f;
     if (fabsf(pos.x - port_pos.x) < port_radius &&
@@ -86,7 +90,9 @@ void render_a_port(int id, bool is_input, bool is_connected, float sz,
       dl->AddCircle(port_pos, port_radius * scale, col);
     }
 
-    /* Check for mousing in port */
+    /*
+     * Check for mouse down in port
+     */
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
       if (fabsf(pos.x - port_pos.x) < port_radius &&
           fabsf(pos.y - port_pos.y) < port_radius) {
@@ -94,9 +100,75 @@ void render_a_port(int id, bool is_input, bool is_connected, float sz,
         state.conn_position = port_pos;
       }
     }
+
+
+    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+      state.connecting = false;
+    }
+
   }
   ImGui::EndChild();
 }
+
+
+/*
+ * Render an input port
+ */
+bool render_input_port(int ipd_idx,
+                       const std::shared_ptr<const InputPortDescriptor> &ipd,
+                       bool is_selected,
+                       bool is_connected,
+                       State &state,
+                       ImVec2 &port_pos
+) {
+  auto line_height = ImGui::GetTextLineHeight();
+
+  render_a_port(ipd_idx + 1, true, is_connected, line_height, state, port_pos);
+
+  ImGui::SameLine(0, 0);
+
+  if( ImGui::BeginChild(ipd_idx+100,{-line_height, line_height} ) ) {
+    if (is_selected) {
+      ImGui::PushStyleColor(ImGuiCol_Text, 0xffffffff);
+    }
+    ImGui::Text("%s", ipd->name().c_str());
+    if (is_selected) {
+      ImGui::PopStyleColor(1);
+    }
+  }
+  ImGui::EndChild();
+  return false;
+}
+
+/*
+ * Render an output port
+ */
+bool render_output_port(int opd_idx,
+                       const std::shared_ptr<const OutputPortDescriptor> &opd,
+                       bool is_selected,
+                       bool is_connected,
+                       State &state,
+                       ImVec2 &port_pos
+) {
+  auto line_height = ImGui::GetTextLineHeight();
+
+  if( ImGui::BeginChild(opd_idx+100,{-line_height, line_height} ) ) {
+    if (is_selected) {
+      ImGui::PushStyleColor(ImGuiCol_Text, 0xffffffff);
+    }
+    ImGui::Text("%s", opd->name().c_str());
+    if (is_selected) {
+      ImGui::PopStyleColor(1);
+    }
+  }
+  ImGui::EndChild();
+
+  ImGui::SameLine(0, 0);
+
+  render_a_port(opd_idx + 1, false, is_connected, line_height, state, port_pos);
+  return false;
+}
+
 
 /*
  * Render input ports for a specific Xform
@@ -110,10 +182,6 @@ void render_input_ports(const std::string &xform_name,
 
   auto num_inputs = input_port_descriptors.size();
 
-  // Compute some metrics
-  auto line_height = ImGui::GetTextLineHeight();
-  auto port_radius = 0.3f * line_height;
-
   ImGui::PushStyleColor(ImGuiCol_ChildBg, g_in_port_bg_colour);
   if (ImGui::BeginChild("##inputs", {ImGui::GetWindowWidth() * 0.5f, 0})) {
 
@@ -123,26 +191,11 @@ void render_input_ports(const std::string &xform_name,
       const bool is_selected = (current_selection == ipd_idx);
       const bool is_port_connected = is_connected.at(ipd_idx);
 
-      /* Render the port as an invisible button to prevent window dragging */
       ImVec2 port_pos;
-      render_a_port(ipd_idx+1, true, is_port_connected, line_height, state, port_pos);
-      in_port_coords.emplace(std::make_pair(xform_name, ipd->name()), port_pos);
-
-      ImGui::SameLine(0, 0);
-
-      // And the port name
-      if (ImGui::Selectable(ipd->name().c_str(), is_selected)) {
+      if( render_input_port(ipd_idx, ipd, is_selected, is_port_connected, state, port_pos) ) {
         current_selection = ipd_idx;
       }
-
-      // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-      if (is_selected) {
-        ImGui::SetItemDefaultFocus();
-      }
-
-      if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-        state.connecting = false;
-      }
+      in_port_coords.emplace(std::make_pair(xform_name, ipd->name()), port_pos);
     }
   }
   ImGui::EndChild();
@@ -160,10 +213,6 @@ void render_output_ports(const std::string &xform_name,
                          State &state) {
   auto num_outputs = output_port_descriptors.size();
 
-  // Compute some metrics
-  auto line_height = ImGui::GetTextLineHeight();
-  auto port_radius = 0.4f * line_height;
-
   ImGui::PushStyleColor(ImGuiCol_ChildBg, g_out_port_bg_colour);
   ImGui::PushStyleColor(ImGuiCol_Border, g_xform_bg_colour);
 
@@ -175,21 +224,10 @@ void render_output_ports(const std::string &xform_name,
       const bool is_selected = (current_selection == opd_idx);
       const bool is_port_connected = is_connected.at(opd_idx);
 
-      if (ImGui::Selectable(opd->name().c_str(), is_selected, 0,
-                            {ImGui::GetWindowWidth() - line_height, 0})) {
+      ImVec2 port_pos;
+      if(render_output_port(opd_idx, opd, is_selected, is_port_connected, state, port_pos)) {
         current_selection = opd_idx;
       }
-
-      // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-      if (is_selected) {
-        ImGui::SetItemDefaultFocus();
-      }
-
-      ImGui::SameLine(0, 0);
-
-      /* Render the port */
-      ImVec2 port_pos;
-      render_a_port(opd_idx+1, false, is_port_connected, line_height, state, port_pos);
       out_port_coords.emplace(std::make_pair(xform_name, opd->name()), port_pos);
     }
   }
