@@ -134,18 +134,19 @@ std::shared_ptr<XformGraph> xform_read_graph(std::istream &is) {
     graph->add_xform(xform);
   }
 
-  auto connections = graph_json.at("connections");
-  for (auto con_j: connections) {
-    std::string fx = con_j.at("from_xform");
-    std::string fp = con_j.at("from_port");
-    std::string tx = con_j.at("to_xform");
-    std::string tp = con_j.at("to_port");
-    if (!graph->add_connection(fx, fp, tx, tp)) {
-      spdlog::error("load_graph() couldn't add connection from {}::{} to {}::{}", fx, fp, tx, tp);
-      return nullptr;
+  if (graph_json.contains("connections")) {
+    auto connections = graph_json.at("connections");
+    for (auto con_j: connections) {
+      std::string fx = con_j.at("from_xform");
+      std::string fp = con_j.at("from_port");
+      std::string tx = con_j.at("to_xform");
+      std::string tp = con_j.at("to_port");
+      if (!graph->add_connection(fx, fp, tx, tp)) {
+        spdlog::error("load_graph() couldn't add connection from {}::{} to {}::{}", fx, fp, tx, tp);
+        return nullptr;
+      }
     }
   }
-
   return graph;
 }
 
@@ -153,6 +154,10 @@ std::shared_ptr<XformGraph>
 load_graph(const std::string &file_name) {
 
   std::ifstream f(file_name);
+  if (f.fail()) {
+    spdlog::error("File not found {}", file_name);
+    return nullptr;
+  }
 
   return xform_read_graph(f);
 }
