@@ -10,6 +10,16 @@
 
 #include <spdlog/cfg/env.h>
 
+float g_rounding = 5.0f;
+ImVec4 g_xform_bg_colour = ImColor(40, 40, 40, 255);
+ImVec4 g_title_bg_colour = ImColor(57, 57, 57, 255);
+ImVec4 g_text_colour = ImColor(140, 140, 140, 255);
+ImVec4 g_in_port_bg_colour = ImColor(57, 57, 57, 255);
+ImVec4 g_out_port_bg_colour = ImColor(43, 43, 43, 255);
+ImColor g_conn_in_port_colour = ImColor(170, 230, 150, 255);
+ImColor g_conn_out_port_colour = ImColor(230, 170, 150, 255);
+
+
 GLFWwindow *initgl() {
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -45,126 +55,182 @@ void initImGui(GLFWwindow *window) {
 /*
  * Render input ports for a specific Xform
  */
-void render_input_ports(const std::shared_ptr<const Xform> &xform,
-                        std::map<std::pair<std::string, std::string>, ImVec2> &in_port_coords) {
+void render_input_ports(const std::string &xform_name,
+                        const std::vector<std::shared_ptr<const InputPortDescriptor>> &input_port_descriptors,
+                        const std::vector<bool> &is_connected,
+                        std::map<std::pair<std::string, std::string>, ImVec2> &in_port_coords,
+                        int &current_selection) {
 
-  if (ImGui::BeginChild(
-          "inputs",
-          ImVec2(80, 140),
-          true,
-          0)) {
+  // Compute some metrics
+  auto line_height = ImGui::GetTextLineHeightWithSpacing();
+  auto num_inputs = input_port_descriptors.size();
+  auto window_x = ImGui::GetWindowPos().x;
+  auto window_y = ImGui::GetWindowPos().y;
+  auto port_radius = 0.3f * line_height;
+  auto indent = (port_radius + 2.0f) * 3;
 
-    static int item_current_idx = 0;
-    auto num_inputs = xform->input_port_descriptors().size();
+  ImGui::PushStyleColor(ImGuiCol_ChildBg, g_in_port_bg_colour);
 
-    if (ImGui::BeginListBox("inputs", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing()))) {
-      for (int n = 0; n < num_inputs; n++) {
-        auto ipd = xform->input_port_descriptors().at(n);
 
-        const bool is_selected = (item_current_idx == n);
-        if (ImGui::Selectable(ipd->name().c_str(), is_selected))
-          item_current_idx = n;
+  if (ImGui::BeginChild("##inputs", {ImGui::GetWindowWidth() * 0.5f, 0})) {
 
-        ImVec2 port_pos = ImGui::GetItemRectMin();
-        auto sz = ImGui::GetItemRectSize();
-        port_pos.y += (sz.y * 0.5f);
-        ImGui::GetForegroundDrawList()->AddCircleFilled(port_pos,
-                                                        5.0f,  ImColor(128, 20, 20),
-                                                        0);
-        in_port_coords.emplace(std::make_pair(xform->name(), ipd->name()),
-                               port_pos);
+    ImGui::Indent(indent);
+    for (int ipd_idx = 0; ipd_idx < num_inputs; ipd_idx++) {
+      const auto &ipd = input_port_descriptors.at(ipd_idx);
 
-        // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-        if (is_selected)
-          ImGui::SetItemDefaultFocus();
+      const bool is_selected = (current_selection == ipd_idx);
+      const bool is_port_connected = is_connected.at(ipd_idx);
+
+      /* Render the port */
+      auto port_pos = ImVec2{window_x + indent * 0.5f, window_y + (ipd_idx + 0.5f) * line_height};
+      if (is_port_connected) {
+        ImGui::GetWindowDrawList()->AddCircleFilled(port_pos,
+                                                    port_radius, g_conn_in_port_colour);
+      } else {
+        ImGui::GetWindowDrawList()->AddCircle(port_pos,
+                                              port_radius, g_conn_in_port_colour);
       }
-      ImGui::EndListBox();
+
+      // And the port name
+      if (ImGui::Selectable(ipd->name().c_str(), is_selected)) {
+        current_selection = ipd_idx;
+      }
+
+      // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+      if (is_selected) {
+        ImGui::SetItemDefaultFocus();
+      }
+
     }
+
+    ImGui::Unindent(indent);
   }
   ImGui::EndChild();
+
+  ImGui::PopStyleColor(1);
 }
 
 /*
- * Render output ports for a specific Xform
+ * Render input ports for a specific Xform
  */
-void render_output_ports(const std::shared_ptr<const Xform> &xform,
-                         std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords) {
-  if (ImGui::BeginChild(
-          "outputs",
-          ImVec2(80, 140),
-          true,
-          0)) {
+void render_output_ports(const std::string &xform_name,
+                         const std::vector<std::shared_ptr<const OutputPortDescriptor>> &output_port_descriptors,
+                         const std::vector<bool> &is_connected,
+                         std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords,
+                         int &current_selection) {
+  auto num_outputs = output_port_descriptors.size();
 
-    static int item_current_idx = 0;
-    auto num_outputs = xform->output_port_descriptors().size();
+  // Compute some metrics
+  auto line_height = ImGui::GetTextLineHeightWithSpacing();
+  auto window_r = ImGui::GetWindowPos().x + ImGui::GetWindowWidth();
+  auto window_y = ImGui::GetWindowPos().y;
+  auto port_radius = 0.3f * line_height;
+  auto indent = (port_radius + 2.0f) * 3;
 
-    if (ImGui::BeginListBox("outputs", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing()))) {
-      for (int n = 0; n < num_outputs; n++) {
-        auto opd = xform->output_port_descriptors().at(n);
+  ImGui::PushStyleColor(ImGuiCol_ChildBg, g_out_port_bg_colour);
+  ImGui::PushStyleColor(ImGuiCol_Border, g_xform_bg_colour);
 
-        const bool is_selected = (item_current_idx == n);
-        if (ImGui::Selectable(opd->name().c_str(), is_selected))
-          item_current_idx = n;
+  if (ImGui::BeginChild("##outputs", {ImGui::GetWindowWidth() * 0.5f, 0})) {
 
+    for (int opd_idx = 0; opd_idx < num_outputs; opd_idx++) {
+      const auto &opd = output_port_descriptors.at(opd_idx);
 
-        ImVec2 port_pos = ImGui::GetItemRectMin();
-        auto sz = ImGui::GetItemRectSize();
-        port_pos.y += (sz.y * 0.5f);
-        port_pos.x += sz.x;
-        ImGui::GetForegroundDrawList()->AddCircleFilled(port_pos,
-                                                        5.0f,  ImColor(20, 128, 20),
-                                                        0);
-        out_port_coords.emplace(std::make_pair(xform->name(), opd->name()),
-                                port_pos);
+      const bool is_selected = (current_selection == opd_idx);
+      const bool is_port_connected = is_connected.at(opd_idx);
 
-        // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-        if (is_selected)
-          ImGui::SetItemDefaultFocus();
+      /* Render the port */
+      auto port_pos = ImVec2{window_r - (indent*0.5f), window_y + (opd_idx + 0.5f) * line_height};
+      if (is_port_connected) {
+        ImGui::GetWindowDrawList()->AddCircleFilled(port_pos,port_radius, g_conn_out_port_colour);
+      } else {
+        ImGui::GetWindowDrawList()->AddCircle(port_pos,port_radius, g_conn_out_port_colour);
       }
-      ImGui::EndListBox();
+      out_port_coords.emplace(std::make_pair(xform_name, opd->name()), port_pos);
+
+      if (ImGui::Selectable(opd->name().c_str(), is_selected, 0,
+                            {ImGui::GetWindowWidth() - indent,0 })) {
+        current_selection = opd_idx;
+      }
+
+      // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+      if (is_selected) {
+        ImGui::SetItemDefaultFocus();
+      }
     }
   }
   ImGui::EndChild();
+  ImGui::PopStyleColor(2);
 }
 
-
 /*
- * Render IO ports for a specific Xform
+ * Render input and output ports if they are present.
  */
-void render_ports(const std::shared_ptr<const Xform> &xform,
+void render_ports(const std::shared_ptr<XformGraph> &graph,
+                  const std::shared_ptr<const Xform> &xform,
                   std::map<std::pair<std::string, std::string>, ImVec2> &in_port_coords,
-                  std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords) {
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
-  if (ImGui::BeginChild("ports", ImVec2(160, 140), true, ImGuiWindowFlags_AlwaysAutoResize |
-  ImGuiWindowFlags_NoScrollbar |
-  ImGuiWindowFlags_NoDecoration)) {
-    render_input_ports(xform, in_port_coords);
-    ImGui::SameLine();
-    render_output_ports(xform, out_port_coords);
+                  std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords
+) {
+  auto num_input_ports = xform->input_port_descriptors().size();
+  auto num_output_ports = xform->output_port_descriptors().size();
+  auto max_ports = std::max(num_input_ports, num_output_ports);
 
+  // Build UI details
+  auto height = ImGui::GetTextLineHeightWithSpacing() * (float) max_ports + (ImGui::GetStyle().ChildBorderSize * 2);
+
+  ImGui::BeginChild("##ports", {0, height}, true);
+
+  int selected_input = 0;
+  std::vector<bool> inputs_connected(xform->input_port_descriptors().size(), false);
+  for (auto ip_idx = 0; ip_idx < num_input_ports; ++ip_idx) {
+    auto ipd = xform->input_port_descriptors().at(ip_idx);
+    inputs_connected.push_back(graph->is_connected(*ipd));
   }
+  render_input_ports(xform->name(), xform->input_port_descriptors(),
+                     inputs_connected, in_port_coords, selected_input);
+
+  ImGui::SameLine(0,0);
+
+  int selected_output = 0;
+  std::vector<bool> outputs_connected(xform->output_port_descriptors().size(), false);
+  for (auto op_idx = 0; op_idx < num_output_ports; ++op_idx) {
+    auto opd = xform->output_port_descriptors().at(op_idx);
+    outputs_connected.push_back(graph->is_connected(*opd));
+  }
+
+  render_output_ports(xform->name(), xform->output_port_descriptors(),
+                      outputs_connected, out_port_coords, selected_output);
   ImGui::EndChild();
-  ImGui::PopStyleVar(1);
+
 }
 
+/*
+ * Render an individual transform.
+ * Each transform has
+ * - a name
+ * - zero or more input ports (with type)
+ * - zero or more output ports (with type)
+ * - an optional configuration
+ * - an optionally rendered output
+ */
 void render_xform(const std::shared_ptr<XformGraph> &graph,
                   const std::shared_ptr<const Xform> &xform,
                   std::map<std::pair<std::string, std::string>, ImVec2> &in_port_coords,
                   std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords
 ) {
+  // TODO: Work out dynamic sizing later
+  ImGui::SetNextWindowSize(ImVec2(190.0f, 0));
+
+  /* Own window per xform */
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0, 0});
   ImGui::Begin(xform->name().c_str(), nullptr,
-               ImGuiWindowFlags_NoResize |
-               ImGuiWindowFlags_AlwaysAutoResize |
-               ImGuiWindowFlags_NoCollapse
+               ImGuiWindowFlags_NoResize
+               | ImGuiWindowFlags_AlwaysAutoResize
+               | ImGuiWindowFlags_NoCollapse
   );
-  ImGui::SetWindowSize(ImVec2((float) 160, (float) 140));
 
-  render_ports(xform, in_port_coords, out_port_coords);
+  render_ports(graph, xform, in_port_coords, out_port_coords);
 
-
-  /*
-   * Image output
-   */
+  /* Image output - the selected output port is rendered */
   auto has_op = !xform->output_port_descriptors().empty();
   if (has_op) {
     if (ImGui::CollapsingHeader("Image", ImGuiTreeNodeFlags_None)) {
@@ -181,35 +247,47 @@ void render_xform(const std::shared_ptr<XformGraph> &graph,
     if (ImGui::CollapsingHeader("Config", ImGuiTreeNodeFlags_None)) {
       /* Add image */
       for (const auto &pd: xform->config().descriptors())
-        ImGui::Text(pd.name.c_str());
+        ImGui::Text("%s", pd.name.c_str());
     }
   }
+
   ImGui::End();
+  ImGui::PopStyleVar(1);
 }
 
+/*
+ * Render the graph by rendering the nodes.
+ */
 void render_graph(const std::shared_ptr<XformGraph> &graph) {
-  std::map<std::pair<std::string, std::string>, ImVec2> in_port_coords;
-  std::map<std::pair<std::string, std::string>, ImVec2> out_port_coords;
+  using namespace std;
 
-  // For each node, make a box and add a name to it.
+  /*
+   * Each node is a window that controls its own port locations.
+   * These maps get populated as nodes are drawn and then connections
+   * are drawn separately.
+   */
+  map<pair<string, string>, ImVec2> in_port_coords;
+  map<pair<string, string>, ImVec2> out_port_coords;
+
+  /* For each xform in the graph, make a node
+   */
   for (const auto &xform: graph->xforms()) {
     render_xform(graph, xform, in_port_coords, out_port_coords);
   }
 
-  /**
-   * Render connections
+  /*
+   * Render connections between the nodes
    */
   for (const auto &conn: graph->connections()) {
     auto from_it = out_port_coords.find(conn.first);
     auto to_it = in_port_coords.find(conn.second);
     if (from_it != out_port_coords.end() && to_it != in_port_coords.end()) {
-
       ImVec2 from = from_it->second;
       ImVec2 to = to_it->second;
-      auto midX = from.x + (to.x - from.x) / 2.0f;
+      auto mid_x = from.x + (to.x - from.x) / 2.0f;
       ImGui::GetBackgroundDrawList()->AddBezierCubic(from,
-                                                     ImVec2(midX, from.y),
-                                                     ImVec2(midX, to.y),
+                                                     ImVec2(mid_x, from.y),
+                                                     ImVec2(mid_x, to.y),
                                                      to,
                                                      IM_COL32(80, 60, 0, 255), 2);
     }
@@ -269,45 +347,78 @@ void do_menus(std::shared_ptr<XformGraph> &graph, bool &open_graph_menu_open) {
       open_graph_menu_open = false;
       ImGui::CloseCurrentPopup();
     }
+
+    // Disable iOpen button if no files
     if (num_graph_files == 0)
       ImGui::BeginDisabled();
+
     if (ImGui::Button("Open")) {
       open_graph_menu_open = false;
-      graph = load_graph(graph_file_names[selected_item]);
-      graph->evaluate();
-      ImGui::CloseCurrentPopup();
+      if (graph_file_names) {
+        graph = load_graph(graph_file_names[selected_item]);
+        if (graph) {
+          graph->evaluate();
+          ImGui::CloseCurrentPopup();
+        }
+      }
     }
+
     if (num_graph_files == 0)
       ImGui::EndDisabled();
+
     ImGui::EndPopup();
 
-    for (auto i = 0; i < num_graph_files; ++i) {
-      delete[] graph_file_names[i];
+    if (graph_file_names) {
+      for (auto i = 0; i < num_graph_files; ++i) {
+        delete[] graph_file_names[i];
+      }
+      delete graph_file_names;
     }
-    delete graph_file_names;
   }
 }
 
-int main() {
+void set_global_style() {
+  auto &style = ImGui::GetStyle();
+  style.WindowRounding = g_rounding;
+  style.Colors[ImGuiCol_TitleBg] = g_title_bg_colour;
+  style.Colors[ImGuiCol_TitleBgActive] = g_title_bg_colour;
+  style.Colors[ImGuiCol_Text] = g_text_colour;
+  style.Colors[ImGuiCol_WindowBg] = g_xform_bg_colour;
+  style.Colors[ImGuiCol_ChildBg] = g_xform_bg_colour;
+}
+
+int main(int argc, const char *argv[]) {
   spdlog::cfg::load_env_levels();
 
-  auto window = initgl();
+  // Init glfw
+  auto glfw_window = initgl();
 
-  initImGui(window);
+  // Init ImGui
+  initImGui(glfw_window);
 
+  // State
   std::shared_ptr<XformGraph> graph = nullptr;
-
   bool open_graph_menu_open = false;
-  while (!glfwWindowShouldClose(window)) {
+  if (argc == 2) {
+    graph = load_graph(argv[1]);
+  }
+
+  // Loop forever
+  while (!glfwWindowShouldClose(glfw_window)) {
     glfwPollEvents();
 
-    /*
-     * Start the Dear ImGui frame
-     */
+    // Cls - no depth here.
+    glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    set_global_style();
+
+    // Start defining the ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    // If there's a graph, render it.
     if (graph) {
       render_graph(graph);
     }
@@ -315,33 +426,28 @@ int main() {
     /* Menus */
     do_menus(graph, open_graph_menu_open);
 
+    /* UI Tweaking */
+    if (ImGui::Begin("Controls")) {
+      ImGui::SliderFloat("rounding", &g_rounding, 0.0, 10);
+    }
+    ImGui::End();
 
-/*
- * Do actual rendering
- */
+    // Do actual rendering of frame
     ImGui::Render();
-
-    int display_w, display_h;
-    glfwGetFramebufferSize(window, &display_w, &display_h
-    );
-    glViewport(0, 0, display_w, display_h);
-    glClearColor(0, 0, 0, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
-
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-    glfwSwapBuffers(window);
+    int display_width, display_height;
+    glfwGetFramebufferSize(glfw_window, &display_width, &display_height);
+    glViewport(0, 0, display_width, display_height);
+    glfwSwapBuffers(glfw_window);
   }
 
-// Cleanup
+  // Cleanup
   ImGui_ImplOpenGL3_Shutdown();
-
   ImGui_ImplGlfw_Shutdown();
-
   ImGui::DestroyContext();
 
-  glfwDestroyWindow(window);
-
+  glfwDestroyWindow(glfw_window);
   glfwTerminate();
 
   return EXIT_SUCCESS;
