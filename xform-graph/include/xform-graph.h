@@ -59,12 +59,11 @@ public:
 
   bool is_connected(const InputPortDescriptor &ipd) const {
     // TODO: Fix me
-    spdlog::critical("Xform::is_connected(<input>) Not implemented");
     return false;
   }
+
   bool is_connected(const OutputPortDescriptor &opd) const {
     // TODO: Fix me
-    spdlog::critical("Xform::is_connected(<output>) Not implemented");
     return false;
   }
 
