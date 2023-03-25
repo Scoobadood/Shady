@@ -385,6 +385,27 @@ void render_ports(const std::shared_ptr<XformGraph> &graph,
 }
 
 /*
+ * If an Xform has one or more outputs, enable a collapsing section
+ * to render the selected output.
+ */
+void maybe_render_output_vignette(const std::shared_ptr<const Xform> &xform,
+                                  State & state) {
+  if (xform->output_port_descriptors().empty()) return;
+
+  if (ImGui::CollapsingHeader("Image", ImGuiTreeNodeFlags_None)) {
+    auto selected_output_idx = state.selected_output[xform->name()];
+    auto selected_opd = xform->output_port_descriptors().at(selected_output_idx);
+    auto output = state.graph->output_from(xform->name(), selected_opd->name());
+    if (output) {
+      auto tx = (TextureMetadata *) output.get();
+      auto aspect = (float)tx->height / (float)tx->width;
+      auto scaled_height = ImGui::GetWindowSize().x * aspect;
+      ImGui::Image((ImTextureID) (tx->texture_id), ImVec2(ImGui::GetWindowSize().x, scaled_height));
+    }
+  }
+}
+
+/*
  * Render an individual transform.
  * Each transform has
  * - a name
@@ -412,18 +433,9 @@ void render_xform(const std::shared_ptr<XformGraph> &graph,
 
   render_ports(graph, xform, in_port_coords, out_port_coords, state);
 
-  /* Image output - the selected output port is rendered */
-  auto has_op = !xform->output_port_descriptors().empty();
-  if (has_op) {
-    if (ImGui::CollapsingHeader("Image", ImGuiTreeNodeFlags_None)) {
-      /* Add image */
-      auto op = graph->output_from(xform->name(), xform->output_port_descriptors().front()->name());
-      if (op) {
-        auto tx = (TextureMetadata *) op.get();
-        ImGui::Image((ImTextureID) (tx->texture_id), ImVec2(160, 120));
-      }
-    }
-  }
+  maybe_render_output_vignette(xform, state);
+
+
   auto has_config = !xform->config().descriptors().empty();
   if (has_config) {
     if (ImGui::CollapsingHeader("Config", ImGuiTreeNodeFlags_None)) {
@@ -515,7 +527,7 @@ char **get_graph_file_names(uint32_t &num_files) {
   return nullptr;
 }
 
-void do_menus(bool &open_graph_menu_open, State & state) {
+void do_menus(bool &open_graph_menu_open, State &state) {
   if (ImGui::BeginMainMenuBar()) {
     if (ImGui::BeginMenu("Graph")) {
       if (ImGui::MenuItem("Open...", "Ctrl+O")) {
@@ -629,7 +641,7 @@ int main(int argc, const char *argv[]) {
     }
 
     /* Menus */
-    do_menus( open_graph_menu_open, state);
+    do_menus(open_graph_menu_open, state);
 
     /* UI Tweaking */
     if (ImGui::Begin("State")) {
