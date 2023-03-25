@@ -90,6 +90,7 @@ void render_input_ports(const std::string &xform_name,
         ImGui::GetWindowDrawList()->AddCircle(port_pos,
                                               port_radius, g_conn_in_port_colour);
       }
+      in_port_coords.emplace(std::make_pair(xform_name, ipd->name()), port_pos);
 
       // And the port name
       if (ImGui::Selectable(ipd->name().c_str(), is_selected)) {
