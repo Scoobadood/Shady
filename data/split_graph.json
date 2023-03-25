@@ -2,7 +2,7 @@
   "xforms": [
     {
       "name": "Load",
-      "type": "LoadFileXform",
+      "type": "LoadFile",
       "config": [
         {
           "name": "file_name",
@@ -13,7 +13,7 @@
     },
     {
       "name": "Save",
-      "type": "SaveFileXform",
+      "type": "SaveFile",
       "config": [
         {
           "name": "file_name",
@@ -24,7 +24,7 @@
     },
     {
       "name": "Split",
-      "type": "SplitChannelXform"
+      "type": "SplitChannel"
     }
   ],
   "connections": [
