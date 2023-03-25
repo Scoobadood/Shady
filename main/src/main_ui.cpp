@@ -103,7 +103,6 @@ void render_input_ports(const std::string &xform_name,
       }
 
     }
-
     ImGui::Unindent(indent);
   }
   ImGui::EndChild();
@@ -272,6 +271,13 @@ void render_graph(const std::shared_ptr<XformGraph> &graph) {
   map<pair<string, string>, ImVec2> in_port_coords;
   map<pair<string, string>, ImVec2> out_port_coords;
 
+  static struct State {
+    bool connecting = false;
+    std::string conn_xform;
+    std::shared_ptr<InputPortDescriptor> conn_ipd;
+    ImVec2 conn_position;
+  } state;
+
   /* For each xform in the graph, make a node
    */
   for (const auto &xform: graph->xforms()) {
@@ -294,6 +300,25 @@ void render_graph(const std::shared_ptr<XformGraph> &graph) {
                                                      to,
                                                      IM_COL32(80, 60, 0, 255), 2);
     }
+  }
+
+  if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+    state.connecting = true;
+    state.conn_position = ImGui::GetMousePos();
+  }
+
+  if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+    state.connecting = false;
+  }
+
+  if (state.connecting) {//} ImGui::IsMouseDragging(ImGuiMouseButton_Left, 2)) {
+    auto delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left, 2);
+    auto mid_x = 0.5f * (state.conn_position.x + delta.x);
+    ImGui::GetBackgroundDrawList()->AddBezierCubic(state.conn_position,
+                                                   ImVec2(mid_x, state.conn_position.y),
+                                                   ImVec2(mid_x, state.conn_position.y + delta.y),
+                                                   ImVec2(state.conn_position.x+delta.x, state.conn_position.y + delta.y),
+                                                   IM_COL32(128, 128, 128, 255), 2);
   }
 }
 
