@@ -21,6 +21,7 @@
 #include <string>
 #include <map>
 #include <set>
+#include <deque>
 
 enum XformState {
   UNCONFIGURED, /* One or more config items are missing */
@@ -84,7 +85,7 @@ private:
 
   void update_dependency_order();
 
-  std::vector<std::shared_ptr<Xform>> ordered_xforms_;
+  std::deque<std::shared_ptr<Xform>> ordered_xforms_;
 
   std::map<std::pair<std::string, std::string>, std::shared_ptr<void>> outputs_;
   std::map<std::string, std::shared_ptr<Xform>> xforms_by_name_;

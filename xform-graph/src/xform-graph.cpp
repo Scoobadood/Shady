@@ -156,9 +156,9 @@ bool XformGraph::add_connection(const std::string &from_xform_name,
     connections_to_.erase(conn_it);
     connections_from_.erase({old_from_xform, old_from_port});
   }
+
   connections_from_[{from_xform_name, from_port_name}] = {to_xform_name, to_port_name};
   connections_to_[{to_xform_name, to_port_name}] = {from_xform_name, from_port_name};
-
 
   update_dependency_order();
   for (const auto &xf: ordered_xforms_) {
@@ -398,7 +398,8 @@ void XformGraph::refresh_state(const std::shared_ptr<Xform> &xform) {
 void XformGraph::update_dependency_order() {
   using namespace std;
 
-  deque<shared_ptr<Xform>> ordered_xforms;
+  ordered_xforms_.clear();
+
   set<string> no_marks;
   set<string> temp_marks;
   set<string> perm_marks;
@@ -426,7 +427,7 @@ void XformGraph::update_dependency_order() {
 
     temp_marks.erase(n);
     perm_marks.emplace(n);
-    ordered_xforms.push_front(xforms_by_name_[n]);
+    ordered_xforms_.push_front(xforms_by_name_[n]);
   };
 
   while (!no_marks.empty()) {
