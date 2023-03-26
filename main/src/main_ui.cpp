@@ -16,6 +16,11 @@ ImVec4 g_title_bg_colour = ImColor(57, 57, 57, 255);
 ImVec4 g_text_colour = ImColor(140, 140, 140, 255);
 ImVec4 g_in_port_bg_colour = ImColor(57, 57, 57, 255);
 ImVec4 g_out_port_bg_colour = ImColor(43, 43, 43, 255);
+ImVec4 g_unconfigured_xf_border = ImColor(0, 80, 80, 255);
+ImVec4 g_invalid_xf_border = ImColor(250, 0, 0, 255);
+ImVec4 g_stale_xf_border = ImColor(250, 240, 0, 255);
+ImVec4 g_good_xf_border = ImColor(0, 80, 0, 255);
+
 ImColor g_conn_in_port_colour = ImColor(170, 230, 150, 255);
 ImColor g_conn_out_port_colour = ImColor(230, 170, 150, 255);
 
@@ -405,6 +410,20 @@ void maybe_render_output_vignette(const std::shared_ptr<const Xform> &xform,
   }
 }
 
+ImVec4 border_colour_for_state(XformState s) {
+  switch (s) {
+    case UNCONFIGURED:
+      return g_unconfigured_xf_border;
+    case INVALID:
+      return g_invalid_xf_border;
+    case STALE:
+      return g_stale_xf_border;
+    case GOOD:
+      return g_good_xf_border;
+    default:
+      return ImVec4(255,0,255,255);
+  }
+}
 /*
  * Render an individual transform.
  * Each transform has
@@ -425,6 +444,8 @@ void render_xform(const std::shared_ptr<XformGraph> &graph,
 
   /* Own window per xform */
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0, 0});
+  auto s = state.graph->state_for(xform->name());
+  ImGui::PushStyleColor(ImGuiCol_Border, border_colour_for_state(s));
   ImGui::Begin(xform->name().c_str(), nullptr,
                ImGuiWindowFlags_NoResize
                | ImGuiWindowFlags_AlwaysAutoResize
@@ -446,6 +467,7 @@ void render_xform(const std::shared_ptr<XformGraph> &graph,
   }
 
   ImGui::End();
+  ImGui::PopStyleColor(1);
   ImGui::PopStyleVar(1);
 }
 
@@ -600,6 +622,9 @@ void set_global_style() {
   style.Colors[ImGuiCol_Text] = g_text_colour;
   style.Colors[ImGuiCol_WindowBg] = g_xform_bg_colour;
   style.Colors[ImGuiCol_ChildBg] = g_xform_bg_colour;
+  style.Colors[ImGuiCol_Border] = g_xform_bg_colour;
+  style.ChildBorderSize = 0.0f;
+  style.WindowBorderSize = 2.0f;
 }
 
 int main(int argc, const char *argv[]) {
