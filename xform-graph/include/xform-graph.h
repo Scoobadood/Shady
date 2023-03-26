@@ -22,6 +22,13 @@
 #include <map>
 #include <set>
 
+enum XformState {
+  UNCONFIGURED, /* One or more config items are missing */
+  INVALID, /* A required input is missing */
+  STALE, /* Inputs have changed or been reconfigured since last evaluation */
+  GOOD /* Evaluation is up to date and consistent with inputs */
+};
+
 class XformGraph {
 public:
   bool add_xform(const std::shared_ptr<Xform> &xform);
@@ -69,11 +76,22 @@ public:
   bool remove_connection(const std::string &to_xform_name,
                          const std::string &to_port);
 
+  XformState state_for(const std::string &xform_name) const;
+
+
 private:
+  void refresh_state(const std::shared_ptr<Xform> &xform);
+
+  void update_dependency_order();
+
+  std::vector<std::shared_ptr<Xform>> ordered_xforms_;
+
   std::map<std::pair<std::string, std::string>, std::shared_ptr<void>> outputs_;
-  std::map<std::string, std::shared_ptr<Xform>> xforms_;
+  std::map<std::string, std::shared_ptr<Xform>> xforms_by_name_;
   std::map<std::pair<std::string, std::string>, std::pair<std::string, std::string>> connections_from_;
   std::map<std::pair<std::string, std::string>, std::pair<std::string, std::string>> connections_to_;
+  std::map<std::string, XformState> states_;
+  std::map<std::string, uintmax_t> evaluation_times_;
 };
 
 #endif //IMAGE_TOYS_XFORM_GRAPH_H

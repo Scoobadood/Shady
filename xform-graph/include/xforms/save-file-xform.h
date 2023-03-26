@@ -18,8 +18,14 @@ public:
 
   void init() override;
 
+  bool is_config_valid() const override {
+    std::string fn;
+    return config().get("file_name", fn);
+  }
+
 private:
   static uint32_t next_idx_;
+
   std::map<std::string, std::shared_ptr<void>>
   do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,
            uint32_t &err, std::string &err_msg) override;

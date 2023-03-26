@@ -39,6 +39,12 @@ public:
 
   void init() override;
 
+  bool is_config_valid() const override {
+    // No config
+    return true;
+  }
+
+
 private:
   static uint32_t next_idx_;
   GLuint texture_ids_[4]; // R G B A

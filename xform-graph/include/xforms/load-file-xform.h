@@ -8,7 +8,7 @@ class LoadFileXform : public Xform {
 public:
   LoadFileXform();
 
-  explicit LoadFileXform(const std::string& name);
+  explicit LoadFileXform(const std::string &name);
 
   ~LoadFileXform() override;
 
@@ -21,12 +21,18 @@ public:
    */
   void init() override;
 
+  bool is_config_valid() const override {
+    std::string fn;
+    return config().get("file_name", fn);
+  }
+
 private:
   static uint32_t next_idx_;
 
   std::map<std::string, std::shared_ptr<void>>
   do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,
-           uint32_t &err, std::string &err_msg) override;
+           uint32_t &err, std::string
+           &err_msg) override;
 
   /* Texture to load image to */
   GLuint image_tx_;

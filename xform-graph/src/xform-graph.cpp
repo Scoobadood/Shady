@@ -13,32 +13,45 @@ std::shared_ptr<void> XformGraph::output_from(const std::string &xform_name, con
   return it->second;
 }
 
+/*
+ * Add a new transform to the graph. If it's successfully added
+ * initialise its state.
+ */
 bool
 XformGraph::add_xform(const std::shared_ptr<Xform> &xform) {
-  if (xforms_.find(xform->name()) != xforms_.end()) {
+  if (xforms_by_name_.find(xform->name()) != xforms_by_name_.end()) {
     spdlog::error("Xform {} already in graph.", xform->name());
     return false;
   }
 
-  xforms_.emplace(xform->name(), xform);
+  xforms_by_name_.emplace(xform->name(), xform);
+  evaluation_times_[xform->name()] = 0;
+  refresh_state(xform);
   return true;
 }
 
-/* Delete the xform */
+/*
+ * Delete the xform
+ * and all associated connections to and from others
+ * and associated metadata.
+ * Refresh the state of downstream xforms.
+ */
 bool XformGraph::delete_xform(const std::string &name) {
-  auto it = xforms_.find(name);
-  if (it == xforms_.end()) return false;
-  xforms_.erase(it);
+  auto it = xforms_by_name_.find(name);
+  if (it == xforms_by_name_.end()) return false;
 
-  // Delete the connections
+  // Delete the connections from this xform to others (remember their names)
+  std::set<std::string> impacted_xforms;
   for (auto from_it = connections_from_.begin(); from_it != connections_from_.end();) {
     if (from_it->first.first == name) {
+      impacted_xforms.emplace(from_it->second.first);
       from_it = connections_from_.erase(from_it);
     } else {
       ++from_it;
     }
   }
-  // Delete the to connections
+
+  // Delete the connections to this xform
   for (auto to_it = connections_to_.begin(); to_it != connections_to_.end();) {
     if (to_it->first.first == name) {
       to_it = connections_to_.erase(to_it);
@@ -46,30 +59,53 @@ bool XformGraph::delete_xform(const std::string &name) {
       ++to_it;
     }
   }
+  // Delete evaluation times and states
+  states_.erase(name);
+  evaluation_times_.erase(name);
+
+  // Delete cached outputs
+  for(auto op_iter = outputs_.begin(); op_iter != outputs_.end(); ) {
+    if(op_iter->first.first != name ) {
+      ++op_iter;
+    } else {
+      op_iter = outputs_.erase(op_iter);
+    }
+  }
+
+  // And finally remove the xform.
+  xforms_by_name_.erase(it);
+
+  // Recompute the dependency sequences
+  update_dependency_order();
+
+  // Now refresh the state of the xforms in order
+  for (const auto &xf: ordered_xforms_) {
+    refresh_state(xf);
+  }
+
   return true;
 }
 
 
 std::shared_ptr<Xform> XformGraph::xform(const std::string &name) const {
-  auto it = xforms_.find(name);
-  if (it == xforms_.end()) return nullptr;
+  auto it = xforms_by_name_.find(name);
+  if (it == xforms_by_name_.end()) return nullptr;
   return it->second;
 }
-
 
 bool XformGraph::add_connection(const std::string &from_xform_name,
                                 const std::string &from_port_name,
                                 const std::string &to_xform_name,
                                 const std::string &to_port_name) {
-  auto it = xforms_.find(from_xform_name);
-  if (it == xforms_.end()) {
+  auto it = xforms_by_name_.find(from_xform_name);
+  if (it == xforms_by_name_.end()) {
     spdlog::error("No such xform: {}", from_xform_name);
     return false;
   }
   auto from_xform = it->second;
 
-  it = xforms_.find(to_xform_name);
-  if (it == xforms_.end()) {
+  it = xforms_by_name_.find(to_xform_name);
+  if (it == xforms_by_name_.end()) {
     spdlog::error("No such xform: {}", from_xform_name);
     return false;
   }
@@ -123,6 +159,12 @@ bool XformGraph::add_connection(const std::string &from_xform_name,
   connections_from_[{from_xform_name, from_port_name}] = {to_xform_name, to_port_name};
   connections_to_[{to_xform_name, to_port_name}] = {from_xform_name, from_port_name};
 
+
+  update_dependency_order();
+  for (const auto &xf: ordered_xforms_) {
+    refresh_state(xf);
+  }
+
   return true;
 }
 
@@ -134,9 +176,14 @@ bool XformGraph::remove_connection(const std::string &to_xform_name,
     return false;
   }
   connections_to_.erase(it);
+
+  update_dependency_order();
+  for (const auto &xf: ordered_xforms_) {
+    refresh_state(xf);
+  }
+
   return true;
 }
-
 
 std::set<std::string>
 XformGraph::dependencies_for(const std::shared_ptr<Xform> &xform) const {
@@ -157,9 +204,9 @@ XformGraph::dependencies_for(const std::shared_ptr<Xform> &xform) const {
 
 /*
  * Find all sinks and backwards chain until they are satisfied.
- * If we evaluate all xforms and the sinks are still unsatsfied
+ * If we evaluate all xforms and the sinks are still unsatisfied
  * return false otherwise return true.
- * TODO: We want to be lazy abou this and not force re-evaluate things that are still
+ * TODO: We want to be lazy about this and not force re-evaluate things that are still
  *       valid. We need to decide if we have xforms cache results or do it in the graph.
  *       For now we will re-evaluate everything.
  */
@@ -171,7 +218,7 @@ bool XformGraph::evaluate() {
    * If so, they cannot be evaluated. Flag them as failed first.
    */
   set<string> failed_xforms;
-  for (const auto &xform: xforms_) {
+  for (const auto &xform: xforms_by_name_) {
     for (const auto &ipd: xform.second->input_port_descriptors()) {
       if (!ipd->is_required()) continue;
       if (connections_to_.find({xform.second->name(), ipd->name()}) != connections_to_.end()) continue;
@@ -186,7 +233,7 @@ bool XformGraph::evaluate() {
    * Add the sinks to a queue of xforms to be resolved
    */
   deque<shared_ptr<Xform>> to_satisfy;
-  for (const auto &xform: xforms_) {
+  for (const auto &xform: xforms_by_name_) {
     if (xform.second->is_sink()) {
       to_satisfy.push_back(xform.second);
     }
@@ -196,7 +243,7 @@ bool XformGraph::evaluate() {
   set<string> resolved_xforms;
   outputs_.clear();
   while (!to_satisfy.empty()) {
-    const auto &curr_xform = to_satisfy.back();
+    const auto curr_xform = to_satisfy.back();
 
     // Obtain the set of dependencies. A dependency is a connection that must be satisfied
     // for this xform to be resolved.
@@ -215,7 +262,7 @@ bool XformGraph::evaluate() {
     bool has_unresolved = false;
     for (const auto &dep: deps) {
       if (resolved_xforms.count(dep) == 0) {
-        to_satisfy.push_back(xforms_.at(dep));
+        to_satisfy.push_back(xforms_by_name_.at(dep));
         has_unresolved = true;
       }
     }
@@ -249,7 +296,8 @@ std::vector<std::shared_ptr<const Xform>>
 XformGraph::xforms() const {
   using namespace std;
   vector<shared_ptr<const Xform>> xforms;
-  for (auto &e: xforms_) {
+  xforms.reserve(xforms_by_name_.size());
+  for (auto &e: xforms_by_name_) {
     xforms.push_back(e.second);
   }
   return xforms;
@@ -259,6 +307,7 @@ std::vector<std::pair<std::pair<std::string, std::string>, std::pair<std::string
 XformGraph::connections() const {
   using namespace std;
   vector<pair<pair<string, string>, pair<string, string>>> conns;
+  conns.reserve(connections_from_.size());
   for (auto &fcon: connections_from_) {
     conns.emplace_back(fcon);
   }
@@ -279,12 +328,111 @@ XformGraph::connection_to(const std::string &xform, const std::string &port) con
   return std::make_shared<std::pair<std::string, std::string>>(it->second);
 }
 
-bool XformGraph::input_is_connected(const std::string &xform, const std::string &port) const{
+bool XformGraph::input_is_connected(const std::string &xform, const std::string &port) const {
   auto iter = connections_to_.find({xform, port});
-  return !( iter == connections_to_.end());
+  return !(iter == connections_to_.end());
 }
 
-bool XformGraph::output_is_connected(const std::string &xform, const std::string &port) const{
+bool XformGraph::output_is_connected(const std::string &xform, const std::string &port) const {
   auto iter = connections_from_.find({xform, port});
-  return !( iter == connections_from_.end());
+  return !(iter == connections_from_.end());
+}
+
+/*
+ * We cache states and assume that each xform has a state.
+ */
+XformState XformGraph::state_for(const std::string &xform_name) const {
+  return states_.at(xform_name);
+}
+
+/*
+ * We assume that the xform has just been added and update its state accordingly.
+ *
+ */
+void XformGraph::refresh_state(const std::shared_ptr<Xform> &xform) {
+  using namespace std;
+
+  // Check Config
+  if (!xform->is_config_valid()) {
+    states_[xform->name()] = UNCONFIGURED;
+    return;
+  }
+
+  // Check [required] input connections
+  vector<string> dependent_xforms;
+  for (const auto &ipd: xform->input_port_descriptors()) {
+    if (!ipd->is_required()) continue;
+    auto it = connections_to_.find({xform->name(), ipd->name()});
+    if (it == connections_to_.end()) {
+      states_[xform->name()] = INVALID;
+      return;
+    }
+    dependent_xforms.push_back(it->second.first);
+  }
+
+  // Check input validity and freshness
+  for (const auto &xfn: dependent_xforms) {
+    auto input_state = states_.at(xfn);
+    if (input_state == UNCONFIGURED || input_state == INVALID) {
+      states_[xform->name()] = INVALID;
+      return;
+    }
+    /* The >= here is to manage the fact that newly added xforms have evaluation_times_
+     * set to 0. Any node that has been evaluated already would make this stale but it's possible
+     * that two ndes added together may see themselves fresher than each other unless we compare
+     * for equality.
+     */
+    if (input_state == STALE || (evaluation_times_.at(xfn) >= evaluation_times_.at(xform->name()))) {
+      states_[xform->name()] = STALE;
+      return;
+    }
+  }
+  states_[xform->name()] = GOOD;
+}
+
+/*
+ * Use Kahn's algorithm to generate the new topological sort order
+ * and then refresh the state of each node in order.
+ * https://en.wikipedia.org/wiki/Topological_sorting
+ */
+void XformGraph::update_dependency_order() {
+  using namespace std;
+
+  deque<shared_ptr<Xform>> ordered_xforms;
+  set<string> no_marks;
+  set<string> temp_marks;
+  set<string> perm_marks;
+  for (const auto &x: xforms_by_name_) {
+    no_marks.emplace(x.second->name());
+  }
+
+  std::function<void(const std::string &)> visit = [&](const std::string &n) -> void {
+    if (perm_marks.find(n) != perm_marks.end()) return;
+    if (temp_marks.find(n) != temp_marks.end()) {
+      throw std::runtime_error("Cycle in graph");
+    }
+
+    // Mark temporary mark
+    no_marks.erase(n);
+    temp_marks.emplace(n);
+
+    // nodes_to_visit... downstream of n
+    for (const auto &opd: xforms_by_name_.at(n)->output_port_descriptors()) {
+      auto c = connection_from(n, opd->name());
+      if (c) {
+        visit(c->first);
+      }
+    }
+
+    temp_marks.erase(n);
+    perm_marks.emplace(n);
+    ordered_xforms.push_front(xforms_by_name_[n]);
+  };
+
+  while (!no_marks.empty()) {
+    auto it = no_marks.begin();
+    const auto n = *it;
+    no_marks.erase(it);
+    visit(n);
+  }
 }

@@ -107,6 +107,16 @@ public:
   std::shared_ptr<const OutputPortDescriptor>
   output_port_descriptor_for_port(const std::string &port_name) const;
 
+  /**
+   * Checks the validity of the config. This should return true if 'in principle' the
+   * xform could be applied. i.e. if it needs a file_name, one has been provided and
+   * has the right format.  The existence of the file is NOT a requirement for the
+   * xform to be well-configured as this has the potential to change.
+   *
+   * @return true if the Configuration for this xform is valid.
+   */
+  virtual bool is_config_valid() const { return false; };
+
 protected:
   /*
    * Construct from a subclass.
@@ -115,9 +125,9 @@ protected:
 
   virtual ~Xform() = default;
 
-  static void allocate_textures(int32_t num_textures, GLuint *texture_ids) ;
+  static void allocate_textures(int32_t num_textures, GLuint *texture_ids);
 
-  static void resize_textures(int32_t num_textures, GLuint *texture_ids, GLsizei width, GLsizei height) ;
+  static void resize_textures(int32_t num_textures, GLuint *texture_ids, GLsizei width, GLsizei height);
 
   void add_input_port_descriptor(const std::string &name, const std::string &type, bool is_required = true);
 

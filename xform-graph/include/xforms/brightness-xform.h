@@ -22,6 +22,11 @@ public:
 
   void init() override;
 
+  bool is_config_valid() const override {
+    int br;
+    return config().get("brightness", br);
+  };
+
 private:
   static uint32_t next_idx_;
 
