@@ -643,6 +643,7 @@ int main(int argc, const char *argv[]) {
   bool open_graph_menu_open = false;
   if (argc == 2) {
     state.graph = load_graph(argv[1]);
+    state.graph->evaluate();
   }
 
   // Loop forever
@@ -650,7 +651,7 @@ int main(int argc, const char *argv[]) {
     glfwPollEvents();
 
     // Cls - no depth here.
-    glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
+    glClearColor(30/255.0f, 30/255.0f, 30/255.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     set_global_style();
