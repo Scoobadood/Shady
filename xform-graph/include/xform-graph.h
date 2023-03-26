@@ -26,6 +26,7 @@
 enum XformState {
   UNCONFIGURED, /* One or more config items are missing */
   INVALID, /* A required input is missing */
+  ERROR, /* Evaluate failed for some reason despite bveing correctly configured and wired */
   STALE, /* Inputs have changed or been reconfigured since last evaluation */
   GOOD /* Evaluation is up to date and consistent with inputs */
 };

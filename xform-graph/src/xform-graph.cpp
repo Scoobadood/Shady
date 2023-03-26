@@ -64,8 +64,8 @@ bool XformGraph::delete_xform(const std::string &name) {
   evaluation_times_.erase(name);
 
   // Delete cached outputs
-  for(auto op_iter = outputs_.begin(); op_iter != outputs_.end(); ) {
-    if(op_iter->first.first != name ) {
+  for (auto op_iter = outputs_.begin(); op_iter != outputs_.end();) {
+    if (op_iter->first.first != name) {
       ++op_iter;
     } else {
       op_iter = outputs_.erase(op_iter);
@@ -213,81 +213,45 @@ XformGraph::dependencies_for(const std::shared_ptr<Xform> &xform) const {
 bool XformGraph::evaluate() {
   using namespace std;
 
-  /*
-   * Some xforms may not have mandatory inputs connected.
-   * If so, they cannot be evaluated. Flag them as failed first.
-   */
-  set<string> failed_xforms;
-  for (const auto &xform: xforms_by_name_) {
-    for (const auto &ipd: xform.second->input_port_descriptors()) {
-      if (!ipd->is_required()) continue;
-      if (connections_to_.find({xform.second->name(), ipd->name()}) != connections_to_.end()) continue;
-      failed_xforms.emplace(xform.second->name());
-    }
-  }
-  if (!failed_xforms.empty()) {
-    spdlog::error("One or more xforms do not have required inputs connected");
-  }
-
-  /*
-   * Add the sinks to a queue of xforms to be resolved
-   */
-  deque<shared_ptr<Xform>> to_satisfy;
-  for (const auto &xform: xforms_by_name_) {
-    if (xform.second->is_sink()) {
-      to_satisfy.push_back(xform.second);
-    }
-  }
-
-  // Evaluate until we're done or cannot continue.
-  set<string> resolved_xforms;
+  set<string> failed_deps;
   outputs_.clear();
-  while (!to_satisfy.empty()) {
-    const auto curr_xform = to_satisfy.back();
+  for (const auto &xf: ordered_xforms_) {
+    auto state =state_for(xf->name());
+    if ( state != GOOD && state != STALE) continue;
 
-    // Obtain the set of dependencies. A dependency is a connection that must be satisfied
-    // for this xform to be resolved.
-    auto deps = dependencies_for(curr_xform);
+    // Obtain the set of dependencies.
+    auto deps = dependencies_for(xf);
 
     // If any dep is failed, then curr_xform will fail
-    if (any_of(deps.begin(), deps.end(), [&failed_xforms](const string &dep) {
-      return failed_xforms.count(dep) != 0;
+    if (any_of(deps.begin(), deps.end(), [&failed_deps](const string &dep) {
+      return failed_deps.count(dep) != 0;
     })) {
-      failed_xforms.emplace(curr_xform->name());
-      to_satisfy.pop_back();
+      failed_deps.emplace(xf->name());
       continue;
     }
 
-    // If any dep is not yet considered, enqueue that transform
-    bool has_unresolved = false;
-    for (const auto &dep: deps) {
-      if (resolved_xforms.count(dep) == 0) {
-        to_satisfy.push_back(xforms_by_name_.at(dep));
-        has_unresolved = true;
-      }
-    }
-    if (has_unresolved) continue;
-
     // All deps are resolved. Resolve this xform.
     map<string, shared_ptr<void>> inputs;
-    for (const auto &ipd: curr_xform->input_port_descriptors()) {
-      auto iter = connections_to_.find({curr_xform->name(), ipd->name()});
+    for (const auto &ipd: xf->input_port_descriptors()) {
+      auto iter = connections_to_.find({xf->name(), ipd->name()});
       if (iter == connections_to_.end()) continue;
       inputs.emplace(ipd->name(), outputs_.at({iter->second}));
     }
+
     uint32_t err;
     std::string err_msg;
-    auto out = curr_xform->apply(inputs, err, err_msg);
+    auto out = xf->apply(inputs, err, err_msg);
     if (err == XFORM_OK) {
       for (const auto &o: out) {
-        outputs_.emplace(make_pair(curr_xform->name(), o.first), o.second);
+        outputs_.emplace(make_pair(xf->name(), o.first), o.second);
       }
-      resolved_xforms.emplace(curr_xform->name());
+      states_[xf->name()] = GOOD;
+      evaluation_times_[xf->name()] = ::clock();
     } else {
-      spdlog::error("Xfrom {} failed with code {}: {}", curr_xform->name(), err, err_msg);
-      failed_xforms.emplace(curr_xform->name());
+      states_[xf->name()] = ERROR;
+      spdlog::error("Xfrom {} failed with code {}: {}", xf->name(), err, err_msg);
+      failed_deps.emplace(xf->name());
     }
-    to_satisfy.pop_back();
   }
   return true;
 }
