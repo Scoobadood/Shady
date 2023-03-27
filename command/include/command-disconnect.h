@@ -1,7 +1,7 @@
 #ifndef IMAGE_TOYS_COMMAND_DISCONNECT_H
 #define IMAGE_TOYS_COMMAND_DISCONNECT_H
 
-#include "command.h"
+#include "command-root.h"
 
 class Disconnect : public CommandWithArgs {
 public:

@@ -1,5 +1,5 @@
-#ifndef IMAGE_TOYS_COMMAND_H
-#define IMAGE_TOYS_COMMAND_H
+#ifndef IMAGE_TOYS_COMMAND_ROOT_H
+#define IMAGE_TOYS_COMMAND_ROOT_H
 
 #include <string>
 #include <map>
@@ -89,4 +89,4 @@ private:
 };
 
 
-#endif //IMAGE_TOYS_COMMAND_H
+#endif //IMAGE_TOYS_COMMAND_ROOT_H

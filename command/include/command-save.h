@@ -1,7 +1,7 @@
 #ifndef IMAGE_TOYS_COMMAND_SAVE_H
 #define IMAGE_TOYS_COMMAND_SAVE_H
 
-#include "command.h"
+#include "command-root.h"
 
 class Save : public CommandWithArgs {
 public:

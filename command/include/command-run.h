@@ -1,7 +1,7 @@
 #ifndef IMAGE_TOYS_COMMAND_RUN_H
 #define IMAGE_TOYS_COMMAND_RUN_H
 
-#include "command.h"
+#include "command-root.h"
 
 class Run : public Command {
 public:

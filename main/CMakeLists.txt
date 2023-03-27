@@ -19,18 +19,6 @@ add_definitions(-DGL_SILENCE_DEPRECATION)
 # Command line tool. Still requires GLFW to establish OpenGL context
 add_executable(shady_cli
         src/main_cli.cpp
-        include/command.h src/command.cpp
-        include/command-run.h src/command-run.cpp
-        include/command-load.h src/command-load.cpp
-        include/command-list.h src/command-list.cpp
-        include/command-save.h src/command-save.cpp
-        include/command-quit.h src/command-quit.cpp
-        include/command-show.h src/command-show.cpp
-        include/command-delete.h src/command-delete.cpp
-        include/command-connect.h src/command-connect.cpp
-        include/command-configure.h src/command-configure.cpp
-        include/command-disconnect.h src/command-disconnect.cpp
-        include/command-add.h src/command-add.cpp
         )
 
 target_include_directories(shady_cli
@@ -44,6 +32,7 @@ target_link_libraries(shady_cli
         Xform
         glfw
         Common
+        Command
         )
 
 

@@ -1,7 +1,7 @@
 #ifndef IMAGE_TOYS_COMMAND_CONNECT_H
 #define IMAGE_TOYS_COMMAND_CONNECT_H
 
-#include "command.h"
+#include "command-root.h"
 
 class Connect : public CommandWithArgs {
 public:

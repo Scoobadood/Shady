@@ -5,7 +5,7 @@
 #ifndef IMAGE_TOYS_COMMAND_LIST_H
 #define IMAGE_TOYS_COMMAND_LIST_H
 
-#include "command.h"
+#include "command-root.h"
 
 
 class List : public Command {

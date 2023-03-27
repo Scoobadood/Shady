@@ -1,7 +1,7 @@
 #ifndef IMAGE_TOYS_COMMAND_DELETE_H
 #define IMAGE_TOYS_COMMAND_DELETE_H
 
-#include "command.h"
+#include "command-root.h"
 
 class Delete : public CommandWithArgs {
 public:

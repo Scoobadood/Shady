@@ -1,7 +1,7 @@
 #ifndef IMAGE_TOYS_COMMAND_SHOW_H
 #define IMAGE_TOYS_COMMAND_SHOW_H
 
-#include "command.h"
+#include "command-root.h"
 
 class Show : public CommandWithArgs {
 public:

@@ -34,6 +34,7 @@ FetchContent_MakeAvailable(spdlog)
 include_directories(${spdlog_SOURCE_DIR}/include)
 
 
+add_subdirectory(command)
 add_subdirectory(common)
 add_subdirectory(xform-graph)
 add_subdirectory(main)

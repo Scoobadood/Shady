@@ -5,7 +5,7 @@
 #ifndef IMAGE_TOYS_COMMAND_LOAD_H
 #define IMAGE_TOYS_COMMAND_LOAD_H
 
-#include "command.h"
+#include "command-root.h"
 #include "xform-io.h"
 
 class Load : public CommandWithArgs {

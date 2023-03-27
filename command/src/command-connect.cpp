@@ -1,7 +1,7 @@
 #include "command-connect.h"
 #include "xform-graph.h"
 
-#include <spdlog/spdlog-inl.h>
+#include "spdlog/spdlog-inl.h"
 
 Connect::Connect(const std::vector<std::string> &args) //
         : CommandWithArgs(args) //

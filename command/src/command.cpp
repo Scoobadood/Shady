@@ -1,4 +1,4 @@
-#include "command.h"
+#include "command-root.h"
 #include "string_utils.h"
 #include "command-load.h"
 #include "command-list.h"
@@ -14,6 +14,7 @@
 
 #include <string>
 #include <map>
+
 #include <spdlog/spdlog-inl.h>
 
 Command::Command() //
