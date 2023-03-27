@@ -2,6 +2,11 @@
 #include "xform-graph.h"
 #include "file_utils.h"
 #include "xform-texture-meta.h"
+#include "xform-factory.h"
+
+#include "ui_state.h"
+#include "ui_theme.h"
+#include "ui_menu.h"
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
@@ -10,36 +15,6 @@
 
 #include <spdlog/cfg/env.h>
 
-float g_rounding = 5.0f;
-ImVec4 g_xform_bg_colour = ImColor(40, 40, 40, 255);
-ImVec4 g_title_bg_colour = ImColor(57, 57, 57, 255);
-ImVec4 g_text_colour = ImColor(140, 140, 140, 255);
-ImVec4 g_in_port_bg_colour = ImColor(57, 57, 57, 255);
-ImVec4 g_out_port_bg_colour = ImColor(43, 43, 43, 255);
-ImVec4 g_unconfigured_xf_border = ImColor(0, 80, 80, 255);
-ImVec4 g_invalid_xf_border = ImColor(250, 0, 0, 255);
-ImVec4 g_stale_xf_border = ImColor(250, 240, 0, 255);
-ImVec4 g_good_xf_border = ImColor(0, 80, 0, 255);
-
-ImColor g_conn_in_port_colour = ImColor(170, 230, 150, 255);
-ImColor g_conn_out_port_colour = ImColor(230, 170, 150, 255);
-
-struct State {
-  std::shared_ptr<XformGraph> graph;
-
-  /* Only set if we are actively connecting */
-  std::shared_ptr<const Xform> connecting_xform;
-  std::shared_ptr<const InputPortDescriptor> connecting_input;
-  std::shared_ptr<const OutputPortDescriptor> connecting_output;
-  ImVec2 conn_position;
-
-  /* Currently selected output port index for each xform */
-  std::map<std::string, int> selected_output;
-
-  inline bool is_connecting() const {
-    return connecting_input || connecting_output;
-  }
-};
 
 struct XformRenderContext {
   std::shared_ptr<const Xform> xform;
@@ -394,7 +369,7 @@ void render_ports(const std::shared_ptr<XformGraph> &graph,
  * to render the selected output.
  */
 void maybe_render_output_vignette(const std::shared_ptr<const Xform> &xform,
-                                  State & state) {
+                                  State &state) {
   if (xform->output_port_descriptors().empty()) return;
 
   if (ImGui::CollapsingHeader("Image", ImGuiTreeNodeFlags_None)) {
@@ -403,7 +378,7 @@ void maybe_render_output_vignette(const std::shared_ptr<const Xform> &xform,
     auto output = state.graph->output_from(xform->name(), selected_opd->name());
     if (output) {
       auto tx = (TextureMetadata *) output.get();
-      auto aspect = (float)tx->height / (float)tx->width;
+      auto aspect = (float) tx->height / (float) tx->width;
       auto scaled_height = ImGui::GetWindowSize().x * aspect;
       ImGui::Image((ImTextureID) (tx->texture_id), ImVec2(ImGui::GetWindowSize().x, scaled_height));
     }
@@ -421,9 +396,10 @@ ImVec4 border_colour_for_state(XformState s) {
     case GOOD:
       return g_good_xf_border;
     default:
-      return ImVec4(255,0,255,255);
+      return ImVec4(255, 0, 255, 255);
   }
 }
+
 /*
  * Render an individual transform.
  * Each transform has
@@ -446,7 +422,9 @@ void render_xform(const std::shared_ptr<XformGraph> &graph,
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0, 0});
   auto s = state.graph->state_for(xform->name());
   ImGui::PushStyleColor(ImGuiCol_Border, border_colour_for_state(s));
-  ImGui::Begin(xform->name().c_str(), nullptr,
+
+  auto title = fmt::format("{}:{}", xform->name(), xform->type());
+  ImGui::Begin(title.c_str(), nullptr,
                ImGuiWindowFlags_NoResize
                | ImGuiWindowFlags_AlwaysAutoResize
                | ImGuiWindowFlags_NoCollapse
@@ -524,96 +502,6 @@ void render_graph(State &state) {
   }
 }
 
-char **get_graph_file_names(uint32_t &num_files) {
-  std::vector<std::string> files;
-  files_in_directory(get_cwd(), files, [](const char *const file_name) {
-    auto l = strlen(file_name);
-    if (l < 6) return false; // too short
-    if (file_name[l - 5] != '.') return false;
-    if (file_name[l - 4] != 'j' && file_name[l - 4] != 'J') return false;
-    if (file_name[l - 3] != 's' && file_name[l - 3] != 'S') return false;
-    if (file_name[l - 2] != 'o' && file_name[l - 2] != 'O') return false;
-    if (file_name[l - 1] != 'n' && file_name[l - 1] != 'N') return false;
-    return true;
-  });
-
-  num_files = files.size();
-  if (num_files) {
-    char **names = new char *[files.size()];
-    for (auto i = 0; i < num_files; ++i) {
-      names[i] = new char[files[i].size() + 1];
-      strcpy(names[i], files[i].c_str());
-    }
-    return names;
-  }
-  return nullptr;
-}
-
-void do_menus(bool &open_graph_menu_open, State &state) {
-  if (ImGui::BeginMainMenuBar()) {
-    if (ImGui::BeginMenu("Graph")) {
-      if (ImGui::MenuItem("Open...", "Ctrl+O")) {
-        open_graph_menu_open = true;
-      }
-      if (ImGui::MenuItem("Save", "Ctrl+S")) { /* Do stuff */ }
-      if (ImGui::MenuItem("Close", "Ctrl+W")) {
-        state.graph = nullptr;
-      }
-      ImGui::EndMenu();
-    }
-    ImGui::EndMainMenuBar();
-  }
-
-  if (open_graph_menu_open)
-    ImGui::OpenPopup("XXX");
-
-  if (ImGui::BeginPopupModal("XXX")) {
-    state.connecting_input = nullptr;
-    state.connecting_output = nullptr;
-    state.connecting_xform = nullptr;
-
-
-    ImGui::Text("Open a graph");
-    static int selected_item = 0;
-    uint32_t num_graph_files;
-    auto graph_file_names = get_graph_file_names(num_graph_files);
-    ImGui::ListBox("Graphs", &selected_item, graph_file_names, num_graph_files);
-
-    if (ImGui::Button("Cancel")) {
-      open_graph_menu_open = false;
-      ImGui::CloseCurrentPopup();
-    }
-
-    // Disable iOpen button if no files
-    if (num_graph_files == 0)
-      ImGui::BeginDisabled();
-
-    if (ImGui::Button("Open")) {
-      open_graph_menu_open = false;
-      if (graph_file_names) {
-        auto graph = load_graph(graph_file_names[selected_item]);
-        if (graph) {
-          state.graph = graph;
-          state.graph->evaluate();
-          ImGui::CloseCurrentPopup();
-        }
-      }
-    }
-
-    if (num_graph_files == 0)
-      ImGui::EndDisabled();
-
-    ImGui::EndPopup();
-
-    if (graph_file_names) {
-      for (auto i = 0; i < num_graph_files; ++i) {
-        delete[] graph_file_names[i];
-      }
-      delete graph_file_names;
-    }
-  }
-}
-
 void set_global_style() {
   auto &style = ImGui::GetStyle();
   style.WindowRounding = g_rounding;
@@ -651,7 +539,7 @@ int main(int argc, const char *argv[]) {
     glfwPollEvents();
 
     // Cls - no depth here.
-    glClearColor(30/255.0f, 30/255.0f, 30/255.0f, 1.0f);
+    glClearColor(30 / 255.0f, 30 / 255.0f, 30 / 255.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     set_global_style();
@@ -668,6 +556,16 @@ int main(int argc, const char *argv[]) {
 
     /* Menus */
     do_menus(open_graph_menu_open, state);
+
+    if (ImGui::BeginPopupContextVoid("Add")) {
+      for (auto &xform_name: XformFactory::registered_types()) {
+        if (ImGui::Selectable(xform_name.c_str())) {
+          auto xf = XformFactory::make_xform(xform_name);
+          state.graph->add_xform(xf);
+        }
+      }
+      ImGui::EndPopup();
+    }
 
     /* UI Tweaking */
     if (ImGui::Begin("State")) {

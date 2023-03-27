@@ -13,6 +13,9 @@ using FactoryFn = std::function<std::shared_ptr<Xform>(const std::string &)>;
 class XformFactory {
 public:
   static std::shared_ptr<Xform>
+  make_xform(const std::string &type);
+
+  static std::shared_ptr<Xform>
   make_xform(const std::string &type,
              const std::string &name,
              const std::map<std::string, std::string> &conf);
@@ -24,6 +27,9 @@ public:
   static void
   register_type(const std::string &type,
                 const FactoryFn &creator);
+
+  static std::vector<std::string>
+  registered_types();
 
 private:
   static std::map<std::string, FactoryFn> registry_;
@@ -42,7 +48,7 @@ std::shared_ptr<cls> create_##cls(const std::string& name) {  \
 }                                                             \
                                                               \
 struct Register##cls {                                        \
-  explicit Register##cls(const std::string& name) {           \
+  explicit Register##cls(const std::string& name="") {        \
     XformFactory::register_type(name, &create_##cls);         \
   }                                                           \
 };                                                            \

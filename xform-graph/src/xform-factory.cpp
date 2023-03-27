@@ -6,6 +6,17 @@
 std::map<std::string, FactoryFn> XformFactory::registry_{};
 
 std::shared_ptr<Xform>
+XformFactory::make_xform(const std::string &type){
+  auto it = registry_.find(type);
+  if( it == registry_.end()) {
+    spdlog::error( "Unrecognised xform type {}.", type);
+    return nullptr;
+  }
+
+  return it->second("");
+}
+
+std::shared_ptr<Xform>
 XformFactory::make_xform(const std::string &type, const std::string &name,
            const std::map<std::string, std::string> &conf){
   auto it = registry_.find(type);
@@ -43,4 +54,14 @@ XformFactory::register_type(const std::string &type,
     spdlog::error( "Class {} is already registered.", type);
   }
   registry_.emplace(type, creator);
+}
+
+std::vector<std::string>
+XformFactory::registered_types() {
+  std::vector<std::string> types;
+  types.reserve(registry_.size());
+  for( const auto & e : registry_) {
+    types.push_back(e.first);
+  }
+  return types;
 }
