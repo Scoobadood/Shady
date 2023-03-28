@@ -26,8 +26,9 @@ SET(IMGUI_SOURCES ${imgui_SOURCE_DIR}/imgui.cpp ${imgui_SOURCE_DIR}/imgui_demo.c
 add_executable(shady
         src/main_ui.cpp
         src/ui_menu.cpp include/ui_menu.h
+        src/ui_theme.cpp include/ui_theme.h
+        src/ui_graph.cpp include/ui_graph.h
         include/ui_state.h
-        include/ui_theme.h
         ${IMGUI_SOURCES}
         )
 
