@@ -45,15 +45,25 @@ bool XformGraph::delete_xform(const std::string &name) {
   for (auto from_it = connections_from_.begin(); from_it != connections_from_.end();) {
     if (from_it->first.first == name) {
       impacted_xforms.emplace(from_it->second.first);
+
+      // Only one connection is allowed into a port so the
+      // connection_to_ entry for this from can be deleted
+      connections_to_.erase(from_it->second);
+
       from_it = connections_from_.erase(from_it);
     } else {
       ++from_it;
     }
   }
 
+
   // Delete the connections to this xform
   for (auto to_it = connections_to_.begin(); to_it != connections_to_.end();) {
     if (to_it->first.first == name) {
+      // Currently only one connection is allowed from a port to another
+      // So erase the connection_from_ to this.
+      connections_from_.erase(to_it->second);
+
       to_it = connections_to_.erase(to_it);
     } else {
       ++to_it;
