@@ -2,8 +2,10 @@
 #include "ui_state.h"
 #include "ui_graph.h"
 #include "ui_theme.h"
+#include "ui_xform_config.h"
 
 #include "xform-texture-meta.h"
+#include "imgui_internal.h"
 
 struct XformRenderContext {
   std::shared_ptr<const Xform> xform;
@@ -384,15 +386,14 @@ void render_xform(const std::shared_ptr<XformGraph> &graph,
   auto title = fmt::format("{}:{}", xform->name(), xform->type());
   ImGui::Begin(title.c_str(), nullptr,
                ImGuiWindowFlags_NoResize
-               | ImGuiWindowFlags_AlwaysAutoResize
                | ImGuiWindowFlags_NoCollapse
   );
 
 
   auto l = ImGui::GetTextLineHeightWithSpacing();
-  ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {0,0});
+  ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {0, 0});
   if (ImGui::BeginChild("##toolbar", {0, l})) {
-    auto w = ImGui::GetWindowWidth() - 2*l;
+    auto w = ImGui::GetWindowWidth() - 2 * l;
     ImGui::Indent(w);
     if (ImGui::ImageButton("##1", (ImTextureID) theme->btn_tx_,
                            {l, l}, {0., 0},
@@ -414,15 +415,7 @@ void render_xform(const std::shared_ptr<XformGraph> &graph,
 
   maybe_render_output_vignette(xform, state);
 
-
-  auto has_config = !xform->config().descriptors().empty();
-  if (has_config) {
-    if (ImGui::CollapsingHeader("Config", ImGuiTreeNodeFlags_None)) {
-      /* Add image */
-      for (const auto &pd: xform->config().descriptors())
-        ImGui::Text("%s", pd.name.c_str());
-    }
-  }
+  maybe_render_config(xform, state);
 
   ImGui::End();
   ImGui::PopStyleColor(1);

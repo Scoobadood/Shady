@@ -28,6 +28,7 @@ add_executable(shady
         src/ui_menu.cpp include/ui_menu.h
         src/ui_theme.cpp include/ui_theme.h
         src/ui_graph.cpp include/ui_graph.h
+        src/ui_xform_config.cpp include/ui_xform_config.h
         include/ui_state.h
         ${IMGUI_SOURCES}
         )
