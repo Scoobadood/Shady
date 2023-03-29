@@ -63,7 +63,10 @@ int main(int argc, const char *argv[]) {
   bool open_graph_menu_open = false;
   if (argc == 2) {
     state.graph = load_graph(argv[1]);
-    state.graph->evaluate();
+    if( state.graph != nullptr) {
+      state.graph_file_name = argv[1];
+      state.graph->evaluate();
+    }
   }
 
   auto theme = Theme::theme();

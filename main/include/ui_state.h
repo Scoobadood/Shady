@@ -5,6 +5,7 @@
 #include "imgui.h"
 
 struct State {
+  std::string graph_file_name;
   std::shared_ptr<XformGraph> graph;
 
   /* Only set if we are actively connecting */

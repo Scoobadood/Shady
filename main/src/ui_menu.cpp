@@ -32,38 +32,22 @@ char **get_graph_file_names(uint32_t &num_files) {
 }
 
 
-void do_menus(bool &open_graph_menu_open, State &state) {
-  if (ImGui::BeginMainMenuBar()) {
-    if (ImGui::BeginMenu("Graph")) {
-      if (ImGui::MenuItem("Open...", "Ctrl+O")) {
-        open_graph_menu_open = true;
-      }
-      if (ImGui::MenuItem("Save", "Ctrl+S")) { /* Do stuff */ }
-      if (ImGui::MenuItem("Close", "Ctrl+W")) {
-        state.graph = nullptr;
-      }
-      ImGui::EndMenu();
-    }
-    ImGui::EndMainMenuBar();
-  }
-
-  if (open_graph_menu_open)
-    ImGui::OpenPopup("XXX");
+void do_open_file(bool &open_file, State &state) {
+  ImGui::OpenPopup("XXX");
 
   if (ImGui::BeginPopupModal("XXX")) {
     state.connecting_input = nullptr;
     state.connecting_output = nullptr;
     state.connecting_xform = nullptr;
 
-
     ImGui::Text("Open a graph");
     static int selected_item = 0;
     uint32_t num_graph_files;
     auto graph_file_names = get_graph_file_names(num_graph_files);
-    ImGui::ListBox("Graphs", &selected_item, graph_file_names, num_graph_files);
+    ImGui::ListBox("##graphs", &selected_item, graph_file_names, num_graph_files);
 
     if (ImGui::Button("Cancel")) {
-      open_graph_menu_open = false;
+      open_file = false;
       ImGui::CloseCurrentPopup();
     }
 
@@ -72,11 +56,12 @@ void do_menus(bool &open_graph_menu_open, State &state) {
       ImGui::BeginDisabled();
 
     if (ImGui::Button("Open")) {
-      open_graph_menu_open = false;
+      open_file = false;
       if (graph_file_names) {
         auto graph = load_graph(graph_file_names[selected_item]);
         if (graph) {
           state.graph = graph;
+          state.graph_file_name = graph_file_names[selected_item];
           state.graph->evaluate();
           ImGui::CloseCurrentPopup();
         }
@@ -95,4 +80,37 @@ void do_menus(bool &open_graph_menu_open, State &state) {
       delete graph_file_names;
     }
   }
+}
+
+void   do_close_file(bool & close_file, State & state) {
+  state.graph_file_name = "";
+  state.graph = nullptr;
+  close_file = false;
+}
+
+void do_save_file(bool &save_file, State &state) {
+  if( state.graph_file_name.empty())
+    state.graph_file_name = "unknown.json";
+  save_graph(state.graph_file_name, state.graph);
+  save_file = false;
+}
+
+void do_menus(bool &open_graph_menu_open, State &state) {
+  static bool open_file = false;
+  static bool save_file = false;
+  static bool close_file = false;
+
+  if (ImGui::BeginMainMenuBar()) {
+    if (ImGui::BeginMenu("Graph")) {
+      ImGui::MenuItem("Open...", "Cmd+O", &open_file);
+      ImGui::MenuItem("Save", "Cmd+S", &save_file);
+      ImGui::MenuItem("Close", "Cmd+X", &close_file);
+      ImGui::EndMenu();
+    }
+    ImGui::EndMainMenuBar();
+  }
+
+  if (open_file) do_open_file(open_file, state);
+  if (save_file) do_save_file(save_file, state);
+  if (close_file) do_close_file(close_file, state);
 }
