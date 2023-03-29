@@ -68,9 +68,12 @@ void BrightnessXform::init() {
 
 /*
  * Input values are in the range (-100, 100)
+ * We map them from 0.5f to 2.0f
  * and map to a brightness multiplier as :
  *    -100 => 0.5
+ *    -50  => 0.75
  *    0    => 1.0
+ *    50   => 1.5
  *    100  => 2.0
  */
 void BrightnessXform::bind_shader_variables() {
@@ -80,10 +83,9 @@ void BrightnessXform::bind_shader_variables() {
   config().get("brightness", br);
   br = std::min(100, std::max(br, -100));
 
-  float fbr;
-  if (br < 0) fbr = (float) br / -200.0f;
-  else if (br > 0) fbr = (float) br / 50.0f;
-  else fbr = 1.0f;
+  float fbr = 1.0f + ((br <= 0 )
+          ? (float) br / 200.0f
+          : (float) br / 100.0f);
 
   shader_->set1f("brightness", fbr);
 }
