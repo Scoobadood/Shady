@@ -174,7 +174,6 @@ bool XformGraph::add_connection(const std::string &from_xform_name,
   for (const auto &xf: ordered_xforms_) {
     refresh_state(xf);
   }
-
   return true;
 }
 
@@ -191,7 +190,6 @@ bool XformGraph::remove_connection(const std::string &to_xform_name,
   for (const auto &xf: ordered_xforms_) {
     refresh_state(xf);
   }
-
   return true;
 }
 
