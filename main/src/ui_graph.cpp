@@ -123,6 +123,7 @@ void render_port_connector(int id, bool is_input,
                     context.xform->name(),
                     context.input_port->name()
             );
+            state.graph->evaluate();
           } else {
             state.graph->add_connection(
                     context.xform->name(),
@@ -130,6 +131,7 @@ void render_port_connector(int id, bool is_input,
                     state.connecting_xform->name(),
                     state.connecting_output->name()
             );
+            state.graph->evaluate();
           }
         }
         state.connecting_xform = nullptr;
