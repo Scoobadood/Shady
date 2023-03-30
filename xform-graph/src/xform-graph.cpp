@@ -259,7 +259,7 @@ bool XformGraph::evaluate() {
       evaluation_times_[xf->name()] = ::clock();
     } else {
       states_[xf->name()] = ERROR;
-      spdlog::error("Xfrom {} failed with code {}: {}", xf->name(), err, err_msg);
+      spdlog::error("Xform {} failed with code {}: {}", xf->name(), err, err_msg);
       failed_deps.emplace(xf->name());
     }
   }

@@ -32,6 +32,7 @@ add_library(Xform SHARED
         src/image_io.cpp include/image_io.h
         src/xforms/load-file-xform.cpp include/xforms/load-file-xform.h
         src/xforms/split-channel-xform.cpp include/xforms/split-channel-xform.h
+        src/xforms/merge-channel-xform.cpp include/xforms/merge-channel-xform.h
         src/xforms/save-file-xform.cpp include/xforms/save-file-xform.h
         src/xforms/brightness-xform.cpp include/xforms/brightness-xform.h
         )

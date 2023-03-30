@@ -28,6 +28,8 @@ const uint32_t XFORM_INPUT_NOT_SET = 4;
 const uint32_t XFORM_FILE_READ_FAILED = 5;
 const uint32_t XFORM_FILE_SAVE_FAILED = 6;
 const uint32_t XFORM_NOT_INITED = 7;
+const uint32_t XFORM_NULL_INPUT  = 8;
+const uint32_t XFORM_MISMATCHED_SIZE = 9;
 
 class Xform {
 public:

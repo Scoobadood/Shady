@@ -23,7 +23,9 @@ class Shader {
 
   // utility uniform functions
   void set1i(const std::string &name, GLint v0) const;
-  void set1f(const std::string &name, GLfloat v0) const;
+  void set4iv(const std::string &name, int32_t count, const GLint * v4) const;
+  void set4b(const std::string &name, bool v0[4]) const;
+    void set1f(const std::string &name, GLfloat v0) const;
   void set2ui(const std::string &name, GLuint v0, GLuint v1) const;
   void set3f(const std::string &name, GLfloat v0, GLfloat v1, GLfloat v2) const;
   void setVec3(const std::string &name, const glm::vec3 &vec) const;

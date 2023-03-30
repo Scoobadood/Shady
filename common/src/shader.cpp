@@ -93,9 +93,9 @@ void Shader::use() const {
   spdlog::critical("Shader is not ready to run");
 }
 
-inline GLint getUniformLocWithLogging(const char * type, GLuint prog_id, const char * name) {
-  auto loc =glGetUniformLocation(prog_id, name);
-  if( loc == -1 ) spdlog::error("Couldn't find uniform {}:{}", name, type);
+inline GLint getUniformLocWithLogging(const char *type, GLuint prog_id, const char *name) {
+  auto loc = glGetUniformLocation(prog_id, name);
+  if (loc == -1) spdlog::error("Couldn't find uniform {}:{}", name, type);
   return loc;
 }
 
@@ -118,6 +118,17 @@ void Shader::set1i(const std::string &name, GLint v0) const {
   auto loc = getUniformLocWithLogging("1i", ID, name.c_str());
   glUniform1i(loc, v0);
 }
+
+void Shader::set4iv(const std::string &name, int32_t count, const GLint *v4) const {
+  auto loc = getUniformLocWithLogging("4iv", ID, name.c_str());
+  glUniform4iv(loc, count, v4);
+}
+
+void Shader::set4b(const std::string &name, bool v0[4]) const {
+  auto loc = getUniformLocWithLogging("4b", ID, name.c_str());
+  glUniform4iv(loc, 1, (const GLint*)v0);
+}
+
 
 void Shader::set2ui(const std::string &name, GLuint v0, GLuint v1) const {
   auto loc = getUniformLocWithLogging("2ui", ID, name.c_str());

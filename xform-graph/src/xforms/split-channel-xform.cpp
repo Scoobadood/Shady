@@ -109,6 +109,9 @@ SplitChannelXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &
             std::make_shared<TextureMetadata>(
                     texture_ids_[i], img->width, img->height));
   }
+
+  gl_check_error_and_halt("split_channel_xform::do_apply");
+
   err = XFORM_OK;
   err_msg = "ok";
   return {
