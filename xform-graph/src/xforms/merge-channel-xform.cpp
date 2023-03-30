@@ -59,10 +59,11 @@ MergeChannelXform::MergeChannelXform(const std::string &name) //
         : RenderXform(name, XformConfig{{}}) //
         , texture_id_{0}//
 {
-  add_input_port_descriptor("red", "image");
-  add_input_port_descriptor("green", "image");
-  add_input_port_descriptor("blue", "image");
-  add_input_port_descriptor("alpha", "image");
+  // No single input is required but at least one must be set.
+  add_input_port_descriptor("red", "image",false);
+  add_input_port_descriptor("green", "image",false);
+  add_input_port_descriptor("blue", "image",false);
+  add_input_port_descriptor("alpha", "image",false);
   add_output_port_descriptor("image", "image");
 
 }
