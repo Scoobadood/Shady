@@ -3,6 +3,7 @@ lib/
 build/
 data/*.json
 data/*.png
+data/*.ini
 
 .idea/
 
