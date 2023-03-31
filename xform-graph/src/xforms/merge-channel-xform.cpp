@@ -71,7 +71,6 @@ MergeChannelXform::MergeChannelXform(const std::string &name) //
 void MergeChannelXform::init() {
   RenderXform::init();
   merge_prog_ = std::unique_ptr<Shader>(new Shader(v_shader_source,
-                                                   (const GLchar **) nullptr,
                                                    f_shader_source));
 
   if (merge_prog_) is_init_ = true;
@@ -147,7 +146,7 @@ MergeChannelXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &
     if( input_present[i] ) {
       glBindTexture(GL_TEXTURE_2D, tx_id[i]);
       auto un = fmt::format("channel_{}", name[i]);
-      merge_prog_->set1i(un, i);
+      merge_prog_->set_int(un, i);
     }
   }
   gl_check_error_and_halt("merge_channel_xform::do_apply::merged_prog->set_uniforms:channels");

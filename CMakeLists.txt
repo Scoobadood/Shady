@@ -7,12 +7,9 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall")
 
-list(APPEND CMAKE_PREFIX_PATH $CMAKE "${CMAKE_SOURCE_DIR}/cmake")
-
 # Write targets to bin directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
-
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 
 include(FetchContent)
 
@@ -22,7 +19,6 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/google/googletest.git
         GIT_TAG        main
 )
-FetchContent_MakeAvailable(googletest)
 
 # Spdlog
 FetchContent_Declare(
@@ -30,11 +26,11 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
         GIT_TAG        v1.x
 )
-FetchContent_MakeAvailable(spdlog)
+FetchContent_MakeAvailable(googletest spdlog)
 include_directories(${spdlog_SOURCE_DIR}/include)
-
 
 add_subdirectory(command)
 add_subdirectory(common)
-add_subdirectory(xform-graph)
+add_subdirectory(gl_helpers)
 add_subdirectory(main)
+add_subdirectory(xform-graph)

@@ -1,6 +1,7 @@
 #include "xforms/split-channel-xform.h"
 #include "xform-texture-meta.h"
-#include "spdlog/spdlog-inl.h"
+#include "shader.h"
+#include <spdlog/spdlog-inl.h>
 
 const GLchar *v_shader_source[] = {R"(
 #version 410 core
@@ -57,9 +58,8 @@ SplitChannelXform::SplitChannelXform(const std::string &name) //
 void SplitChannelXform::init() {
   RenderXform::init();
   split_prog_ = std::unique_ptr<Shader>(new Shader(v_shader_source,
-                                                   (const GLchar **) nullptr,
                                                    f_shader_source));
-  if (split_prog_) is_init_ = true;
+  is_init_ = split_prog_->is_good();
 }
 
 
@@ -95,7 +95,7 @@ SplitChannelXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, img->texture_id);
   split_prog_->use();
-  split_prog_->set1i("input_image", 0);
+  split_prog_->set_int("input_image", 0);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
 
   end_render();

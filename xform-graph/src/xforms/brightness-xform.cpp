@@ -56,7 +56,6 @@ void BrightnessXform::init_shader() {
   spdlog::debug("Brightness::init_shader()");
 
   shader_ = std::unique_ptr<Shader>(new Shader(v_shader_source,
-                                               nullptr,
                                                f_shader_source));
 }
 
@@ -87,5 +86,5 @@ void BrightnessXform::bind_shader_variables() {
           ? (float) br / 200.0f
           : (float) br / 100.0f);
 
-  shader_->set1f("brightness", fbr);
+  shader_->set_float("brightness", fbr);
 }

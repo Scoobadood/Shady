@@ -3,7 +3,6 @@ FetchContent_Declare(
         stb_image
         GIT_REPOSITORY https://github.com/nothings/stb.git
 )
-FetchContent_MakeAvailable(stb_image)
 
 # Nlohman JSON
 FetchContent_Declare(
@@ -11,7 +10,7 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/nlohmann/json.git
         GIT_TAG v3.11.2
 )
-FetchContent_MakeAvailable(nlohman_json)
+FetchContent_MakeAvailable(stb_image nlohman_json)
 
 add_definitions(-DGL_SILENCE_DEPRECATION)
 
@@ -48,31 +47,5 @@ target_link_libraries(Xform
         Common
         PRIVATE
         nlohmann_json::nlohmann_json
-        )
-
-# Integration Test
-add_executable(xform_int_test
-        tests/graph-integration-test.cpp
-        )
-
-target_link_libraries(xform_int_test
-        PRIVATE
-        Xform
-        )
-
-
-# Unit tests
-add_executable(xform_unit_tests
-        tests/test_main.cpp
-        tests/test_ports.cpp tests/test_ports.h
-        tests/test_io.cpp
-        tests/test_base_xform.cpp tests/test_base_xform.h
-        tests/test_config.cpp
-        )
-
-target_link_libraries(xform_unit_tests
-        PRIVATE
-        Xform
-        gtest
-        gmock
+        GLHelpers
         )

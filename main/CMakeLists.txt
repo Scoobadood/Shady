@@ -4,7 +4,6 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/glfw/glfw.git
         GIT_TAG 3.3-stable
 )
-FetchContent_MakeAvailable(glfw)
 
 # Img UI
 FetchContent_Declare(
@@ -12,7 +11,7 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/ocornut/imgui.git
         GIT_TAG
 )
-FetchContent_MakeAvailable(imgui)
+FetchContent_MakeAvailable(glfw imgui)
 
 add_definitions(-DGL_SILENCE_DEPRECATION)
 
@@ -52,6 +51,7 @@ target_link_libraries(shady
 add_executable(shady_cli
         src/main_cli.cpp
         )
+
 
 target_include_directories(shady_cli
         PRIVATE

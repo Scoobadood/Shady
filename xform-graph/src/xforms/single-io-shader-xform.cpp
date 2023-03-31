@@ -65,7 +65,7 @@ SingleIOShaderXform::do_apply(const std::map<std::string, std::shared_ptr<void>>
   glBindTexture(GL_TEXTURE_2D, img->texture_id);
 
   shader_->use();
-  shader_->set1i("input_image", 0);
+  shader_->set_int("input_image", 0);
   bind_shader_variables();
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
