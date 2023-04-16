@@ -184,6 +184,7 @@ bool XformGraph::remove_connection(const std::string &to_xform_name,
     spdlog::error("No such xform: {}", to_xform_name);
     return false;
   }
+  connections_from_.erase(it->second);
   connections_to_.erase(it);
 
   update_dependency_order();
