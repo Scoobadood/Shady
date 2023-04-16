@@ -19,7 +19,7 @@ Shader::Shader(const GLchar *vertex_shader_source[],
 ) {
   is_ready_ = false;
   id_ = make_shader(vertex_shader_source, geometry_shader_source, fragment_shader_source, error_msgs_);
-  if( !id_) {
+  if (!id_) {
     spdlog::error(error_msgs_);
   }
   is_ready_ = true;
@@ -187,4 +187,10 @@ uint32_t compile_shader(GLenum type, const GLchar *const *source, std::string &c
   compile_errors = std::string(info_log);
   glDeleteShader(shader);
   return 0;
+}
+
+uint32_t Shader::get_attribute_location(const std::string &attribute_name) {
+  if (!id_) return 0;
+
+  return glGetAttribLocation(id_,attribute_name.c_str());
 }

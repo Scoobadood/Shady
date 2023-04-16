@@ -20,6 +20,9 @@ public:
   // use/activate the shader
   void use() const;
 
+  // get_attribute_location
+  uint32_t get_attribute_location(const std::string& attribute_name);
+
   // utility uniform functions
   void set_int(const std::string &name, int32_t value) const;
 
