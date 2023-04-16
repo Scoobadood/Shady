@@ -140,6 +140,36 @@ void render_port_connector(int id, bool is_input,
       }
     }
 
+    //
+
+    // Popup delete menu if port is ocnnected
+    if (ImGui::IsMouseReleased(ImGuiMouseButton_Right)) {
+      if (over_port && is_connected) {
+        ImGui::OpenPopup("Frung", ImGuiPopupFlags_MouseButtonRight);
+      }
+    }
+    if (ImGui::BeginPopup("Frung", 0) ){
+      if (ImGui::Selectable("Delete")) {
+        if( is_input) {
+          // Delete connection from other output
+          state.graph->remove_connection(context.xform->name(),
+                                         context.input_port->name());
+
+        } else {
+          // Delete connection to output
+          // TODO: Handle multiple connections
+          // Delete connection from other output
+          auto to = state.graph->connection_from(context.xform->name(), context.output_port->name());
+          state.graph->remove_connection(to->first, to->second);
+        }
+
+      }
+      ImGui::EndPopup();
+    }
+
+
+    //
+
   }
   ImGui::EndChild();
 }
