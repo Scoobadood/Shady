@@ -1,5 +1,5 @@
-#ifndef IMAGE_TOYS_COMMAND_SAVE_H
-#define IMAGE_TOYS_COMMAND_SAVE_H
+#ifndef SHADY_COMMAND_SAVE_H
+#define SHADY_COMMAND_SAVE_H
 
 #include "command-root.h"
 
@@ -15,4 +15,4 @@ private:
   std::string file_name_;
 };
 
-#endif //IMAGE_TOYS_COMMAND_SAVE_H
+#endif //SHADY_COMMAND_SAVE_H

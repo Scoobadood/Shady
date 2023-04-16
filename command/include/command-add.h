@@ -1,5 +1,5 @@
-#ifndef IMAGE_TOYS_COMMAND_ADD_H
-#define IMAGE_TOYS_COMMAND_ADD_H
+#ifndef SHADY_COMMAND_ADD_H
+#define SHADY_COMMAND_ADD_H
 
 #include "command-root.h"
 
@@ -16,4 +16,4 @@ private:
   std::string xform_type_;
 };
 
-#endif //IMAGE_TOYS_COMMAND_ADD_H
+#endif //SHADY_COMMAND_ADD_H

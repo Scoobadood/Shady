@@ -2,8 +2,8 @@
 // Created by Dave Durbin on 9/3/2023.
 //
 
-#ifndef IMAGE_TOYS_COMMON_FLOAT_IMAGE_H
-#define IMAGE_TOYS_COMMON_FLOAT_IMAGE_H
+#ifndef SHADY_COMMON_FLOAT_IMAGE_H
+#define SHADY_COMMON_FLOAT_IMAGE_H
 
 #include <cstdint>
 #include <memory>
@@ -18,4 +18,4 @@ private:
   std::unique_ptr<float[]> data_;
 };
 
-#endif // IMAGE_TOYS_COMMON_FLOAT_IMAGE_H
+#endif // SHADY_COMMON_FLOAT_IMAGE_H

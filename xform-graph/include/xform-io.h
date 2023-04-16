@@ -2,8 +2,8 @@
  * Handle IO for Graphs. Provides a means to save to and load from text files.
  * See docs for text file format.
  */
-#ifndef IMAGE_TOYS_XFORM_IO_H
-#define IMAGE_TOYS_XFORM_IO_H
+#ifndef SHADY_XFORM_IO_H
+#define SHADY_XFORM_IO_H
 
 #include "xform-graph.h"
 #include <cstdint>
@@ -20,4 +20,4 @@ save_graph(const std::string &file_name, const std::shared_ptr<XformGraph> &grap
 std::shared_ptr<XformGraph>
 load_graph(const std::string &file_name);
 
-#endif //IMAGE_TOYS_XFORM_IO_H
+#endif //SHADY_XFORM_IO_H

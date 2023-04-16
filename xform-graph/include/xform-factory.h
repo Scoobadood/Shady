@@ -2,8 +2,8 @@
 // Created by Dave Durbin on 15/3/2023.
 //
 
-#ifndef IMAGE_TOYS_XFORM_FACTORY_H
-#define IMAGE_TOYS_XFORM_FACTORY_H
+#ifndef SHADY_XFORM_FACTORY_H
+#define SHADY_XFORM_FACTORY_H
 
 #include "xforms/xform-config.h"
 #include "xforms/xform.h"
@@ -57,4 +57,4 @@ const std::string cls::TYPE = #type;                          \
 static Register##cls myclass_##cls(cls::TYPE);
 
 
-#endif //IMAGE_TOYS_XFORM_FACTORY_H
+#endif //SHADY_XFORM_FACTORY_H

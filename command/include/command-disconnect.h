@@ -1,5 +1,5 @@
-#ifndef IMAGE_TOYS_COMMAND_DISCONNECT_H
-#define IMAGE_TOYS_COMMAND_DISCONNECT_H
+#ifndef SHADY_COMMAND_DISCONNECT_H
+#define SHADY_COMMAND_DISCONNECT_H
 
 #include "command-root.h"
 
@@ -16,4 +16,4 @@ private:
   std::string to_port_;
 };
 
-#endif //IMAGE_TOYS_COMMAND_DISCONNECT_H
+#endif //SHADY_COMMAND_DISCONNECT_H

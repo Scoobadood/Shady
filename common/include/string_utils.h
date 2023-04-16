@@ -2,8 +2,8 @@
 // Created by Dave Durbin on 17/3/2023.
 //
 
-#ifndef IMAGE_TOYS_STRING_UTILS_H
-#define IMAGE_TOYS_STRING_UTILS_H
+#ifndef SHADY_STRING_UTILS_H
+#define SHADY_STRING_UTILS_H
 
 #include <vector>
 #include <string>
@@ -19,4 +19,4 @@ void rtrim(std::string &s);
 
 /* trim both ends place */
 void trim(std::string &s);
-#endif //IMAGE_TOYS_STRING_UTILS_H
+#endif //SHADY_STRING_UTILS_H

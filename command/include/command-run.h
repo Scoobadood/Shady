@@ -1,5 +1,5 @@
-#ifndef IMAGE_TOYS_COMMAND_RUN_H
-#define IMAGE_TOYS_COMMAND_RUN_H
+#ifndef SHADY_COMMAND_RUN_H
+#define SHADY_COMMAND_RUN_H
 
 #include "command-root.h"
 
@@ -10,4 +10,4 @@ public:
   int32_t execute(std::map<std::string, std::shared_ptr<void>> &context) override;
 };
 
-#endif //IMAGE_TOYS_COMMAND_RUN_H
+#endif //SHADY_COMMAND_RUN_H

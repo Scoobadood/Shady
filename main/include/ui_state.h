@@ -1,5 +1,5 @@
-#ifndef IMAGE_TOYS_UI_STATE_H
-#define IMAGE_TOYS_UI_STATE_H
+#ifndef SHADY_UI_STATE_H
+#define SHADY_UI_STATE_H
 
 #include "xform-graph.h"
 #include "imgui.h"
@@ -22,4 +22,4 @@ struct State {
   }
 };
 
-#endif //IMAGE_TOYS_UI_STATE_H
+#endif //SHADY_UI_STATE_H

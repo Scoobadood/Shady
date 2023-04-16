@@ -14,8 +14,8 @@
  If all four inputs are present, this works as expected.
  For any missing channel, we assume 0 values.
  */
-#ifndef IMAGE_TOYS_MERGE_CHANNEL_XFORM_H
-#define IMAGE_TOYS_MERGE_CHANNEL_XFORM_H
+#ifndef SHADY_MERGE_CHANNEL_XFORM_H
+#define SHADY_MERGE_CHANNEL_XFORM_H
 
 #include "xform-factory.h"
 #include "gl_utils.h"
@@ -60,4 +60,4 @@ private:
 REGISTER_XFORM(MergeChannelXform, MergeChannel)
 
 
-#endif //IMAGE_TOYS_MERGE_CHANNEL_XFORM_H
+#endif //SHADY_MERGE_CHANNEL_XFORM_H

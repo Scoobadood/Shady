@@ -5,8 +5,8 @@
  * Ports are described by descriptors which determine the port name (unique to a transform)
  * the data type expected and (for InputPorts) whether the input is required.
  */
-#ifndef IMAGE_TOYS_XFORM_PORT_H
-#define IMAGE_TOYS_XFORM_PORT_H
+#ifndef SHADY_XFORM_PORT_H
+#define SHADY_XFORM_PORT_H
 
 #include <string>
 
@@ -45,4 +45,4 @@ private:
 };
 
 
-#endif //IMAGE_TOYS_XFORM_PORT_H
+#endif //SHADY_XFORM_PORT_H

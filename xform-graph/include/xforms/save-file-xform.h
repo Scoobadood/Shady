@@ -1,5 +1,5 @@
-#ifndef IMAGE_TOYS_SAVE_FILE_XFORM_H
-#define IMAGE_TOYS_SAVE_FILE_XFORM_H
+#ifndef SHADY_SAVE_FILE_XFORM_H
+#define SHADY_SAVE_FILE_XFORM_H
 
 #include "xform.h"
 #include "xform-factory.h"
@@ -33,4 +33,4 @@ private:
 
 REGISTER_XFORM(SaveFileXform, SaveFile)
 
-#endif //IMAGE_TOYS_SAVE_FILE_XFORM_H
+#endif //SHADY_SAVE_FILE_XFORM_H

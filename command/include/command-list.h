@@ -2,8 +2,8 @@
 // Created by Dave Durbin on 17/3/2023.
 //
 
-#ifndef IMAGE_TOYS_COMMAND_LIST_H
-#define IMAGE_TOYS_COMMAND_LIST_H
+#ifndef SHADY_COMMAND_LIST_H
+#define SHADY_COMMAND_LIST_H
 
 #include "command-root.h"
 
@@ -20,4 +20,4 @@ public:
 };
 
 
-#endif //IMAGE_TOYS_COMMAND_LIST_H
+#endif //SHADY_COMMAND_LIST_H

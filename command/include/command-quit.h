@@ -1,5 +1,5 @@
-#ifndef IMAGE_TOYS_COMMAND_QUIT_H
-#define IMAGE_TOYS_COMMAND_QUIT_H
+#ifndef SHADY_COMMAND_QUIT_H
+#define SHADY_COMMAND_QUIT_H
 
 #include "command-root.h"
 
@@ -12,4 +12,4 @@ public:
 
 
 
-#endif //IMAGE_TOYS_COMMAND_QUIT_H
+#endif //SHADY_COMMAND_QUIT_H

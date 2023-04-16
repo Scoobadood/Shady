@@ -8,8 +8,8 @@
  * Some may have multiple inputs, others multiple outputs.
  * They all have a Configuration which consists of a set of name value parameter pairs.
  */
-#ifndef IMAGE_TOYS_XFORM_H
-#define IMAGE_TOYS_XFORM_H
+#ifndef SHADY_XFORM_H
+#define SHADY_XFORM_H
 
 #include "xform-port.h"
 #include "xform-config.h"
@@ -159,4 +159,4 @@ private:
 };
 
 
-#endif //IMAGE_TOYS_XFORM_H
+#endif //SHADY_XFORM_H

@@ -1,5 +1,5 @@
-#ifndef IMAGE_TOYS_COMMAND_CONFIGURE_H
-#define IMAGE_TOYS_COMMAND_CONFIGURE_H
+#ifndef SHADY_COMMAND_CONFIGURE_H
+#define SHADY_COMMAND_CONFIGURE_H
 
 #include "command-root.h"
 
@@ -17,4 +17,4 @@ private:
   std::string value_;
 };
 
-#endif //IMAGE_TOYS_COMMAND_CONFIGURE_H
+#endif //SHADY_COMMAND_CONFIGURE_H

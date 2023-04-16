@@ -1,5 +1,5 @@
-#ifndef IMAGE_TOYS_RENDER_XFORM_H
-#define IMAGE_TOYS_RENDER_XFORM_H
+#ifndef SHADY_RENDER_XFORM_H
+#define SHADY_RENDER_XFORM_H
 
 #include "xforms/xform.h"
 
@@ -36,4 +36,4 @@ private:
   GLuint vbo_indices_;
 };
 
-#endif //IMAGE_TOYS_RENDER_XFORM_H
+#endif //SHADY_RENDER_XFORM_H

@@ -15,8 +15,8 @@
  as specified in the configuration.
  If the input has only a single channel then it will be copied to all output channels.
  */
-#ifndef IMAGE_TOYS_SPLIT_CHANNEL_XFORM_H
-#define IMAGE_TOYS_SPLIT_CHANNEL_XFORM_H
+#ifndef SHADY_SPLIT_CHANNEL_XFORM_H
+#define SHADY_SPLIT_CHANNEL_XFORM_H
 
 #include "xform-factory.h"
 #include "gl_utils.h"
@@ -61,4 +61,4 @@ private:
 REGISTER_XFORM(SplitChannelXform, SplitChannel)
 
 
-#endif //IMAGE_TOYS_SPLIT_CHANNEL_XFORM_H
+#endif //SHADY_SPLIT_CHANNEL_XFORM_H

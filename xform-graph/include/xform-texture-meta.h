@@ -1,5 +1,5 @@
-#ifndef IMAGE_TOYS_XFORM_TEXTURE_META_H
-#define IMAGE_TOYS_XFORM_TEXTURE_META_H
+#ifndef SHADY_XFORM_TEXTURE_META_H
+#define SHADY_XFORM_TEXTURE_META_H
 
 #include <OpenGL/gl3.h>
 
@@ -16,4 +16,4 @@ struct TextureMetadata {
   {}
 };
 
-#endif //IMAGE_TOYS_XFORM_TEXTURE_META_H
+#endif //SHADY_XFORM_TEXTURE_META_H

@@ -1,5 +1,5 @@
-#ifndef IMAGE_TOYS_LOAD_FILE_XFORM_H
-#define IMAGE_TOYS_LOAD_FILE_XFORM_H
+#ifndef SHADY_LOAD_FILE_XFORM_H
+#define SHADY_LOAD_FILE_XFORM_H
 
 #include "xform.h"
 #include "xform-factory.h"
@@ -40,4 +40,4 @@ private:
 
 REGISTER_XFORM(LoadFileXform, LoadFile)
 
-#endif //IMAGE_TOYS_LOAD_FILE_XFORM_H
+#endif //SHADY_LOAD_FILE_XFORM_H

@@ -1,5 +1,5 @@
-#ifndef IMAGE_TOYS_UI_THEME_H
-#define IMAGE_TOYS_UI_THEME_H
+#ifndef SHADY_UI_THEME_H
+#define SHADY_UI_THEME_H
 
 #include "imgui.h"
 
@@ -30,4 +30,4 @@ struct Theme {
 
 void init_global_style();
 
-#endif //IMAGE_TOYS_UI_THEME_H
+#endif //SHADY_UI_THEME_H

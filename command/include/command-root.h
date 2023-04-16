@@ -1,5 +1,5 @@
-#ifndef IMAGE_TOYS_COMMAND_ROOT_H
-#define IMAGE_TOYS_COMMAND_ROOT_H
+#ifndef SHADY_COMMAND_ROOT_H
+#define SHADY_COMMAND_ROOT_H
 
 #include <string>
 #include <map>
@@ -89,4 +89,4 @@ private:
 };
 
 
-#endif //IMAGE_TOYS_COMMAND_ROOT_H
+#endif //SHADY_COMMAND_ROOT_H

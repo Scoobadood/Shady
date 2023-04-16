@@ -142,13 +142,13 @@ void render_port_connector(int id, bool is_input,
 
     //
 
-    // Popup delete menu if port is ocnnected
+    // Popup delete menu if port is connected
     if (ImGui::IsMouseReleased(ImGuiMouseButton_Right)) {
       if (over_port && is_connected) {
-        ImGui::OpenPopup("Frung", ImGuiPopupFlags_MouseButtonRight);
+        ImGui::OpenPopup("#delete_menu", ImGuiPopupFlags_MouseButtonRight);
       }
     }
-    if (ImGui::BeginPopup("Frung", 0) ){
+    if (ImGui::BeginPopup("delete_menu", 0) ){
       if (ImGui::Selectable("Delete")) {
         if( is_input) {
           // Delete connection from other output

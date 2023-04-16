@@ -11,8 +11,8 @@
  * |          B +-------+ G          |
  * +------------+       +------------+
  */
-#ifndef IMAGE_TOYS_XFORM_GRAPH_H
-#define IMAGE_TOYS_XFORM_GRAPH_H
+#ifndef SHADY_XFORM_GRAPH_H
+#define SHADY_XFORM_GRAPH_H
 
 #include "xforms/xform.h"
 
@@ -96,4 +96,4 @@ private:
   std::map<std::string, uintmax_t> evaluation_times_;
 };
 
-#endif //IMAGE_TOYS_XFORM_GRAPH_H
+#endif //SHADY_XFORM_GRAPH_H

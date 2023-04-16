@@ -1,5 +1,5 @@
-#ifndef IMAGE_TOYS_COMMAND_H
-#define IMAGE_TOYS_COMMAND_H
+#ifndef SHADY_COMMAND_H
+#define SHADY_COMMAND_H
 
 #include "command-add.h"
 #include "command-configure.h"
@@ -13,4 +13,4 @@
 #include "command-save.h"
 #include "command-show.h"
 
-#endif //IMAGE_TOYS_COMMAND_H
+#endif //SHADY_COMMAND_H

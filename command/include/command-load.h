@@ -2,8 +2,8 @@
 // Created by Dave Durbin on 17/3/2023.
 //
 
-#ifndef IMAGE_TOYS_COMMAND_LOAD_H
-#define IMAGE_TOYS_COMMAND_LOAD_H
+#ifndef SHADY_COMMAND_LOAD_H
+#define SHADY_COMMAND_LOAD_H
 
 #include "command-root.h"
 #include "xform-io.h"
@@ -20,4 +20,4 @@ private:
   std::string file_name_;
 };
 
-#endif //IMAGE_TOYS_COMMAND_LOAD_H
+#endif //SHADY_COMMAND_LOAD_H

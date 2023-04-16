@@ -2,8 +2,8 @@
  * An XformConfig is a set of parameters which define how an Xform
  * works.
  */
-#ifndef IMAGE_TOYS_XFORM_CONFIG_H
-#define IMAGE_TOYS_XFORM_CONFIG_H
+#ifndef SHADY_XFORM_CONFIG_H
+#define SHADY_XFORM_CONFIG_H
 
 #include <string>
 #include <map>
@@ -81,4 +81,4 @@ private:
   std::map<std::string, std::shared_ptr<XProperty> > values_;
 };
 
-#endif //IMAGE_TOYS_XFORM_CONFIG_H
+#endif //SHADY_XFORM_CONFIG_H

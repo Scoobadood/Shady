@@ -6,8 +6,8 @@
  * Subclasses should specify the XformConfig required to configure the shader as
  * well as supplying source code for the shaders themselves.
  */
-#ifndef IMAGE_TOYS_SINGLE_IO_SHADER_XFORM_H
-#define IMAGE_TOYS_SINGLE_IO_SHADER_XFORM_H
+#ifndef SHADY_SINGLE_IO_SHADER_XFORM_H
+#define SHADY_SINGLE_IO_SHADER_XFORM_H
 
 #include "render-xform.h"
 #include "shader.h"
@@ -38,4 +38,4 @@ private:
   GLuint texture_id_;
 };
 
-#endif //IMAGE_TOYS_SINGLE_IO_SHADER_XFORM_H
+#endif //SHADY_SINGLE_IO_SHADER_XFORM_H

@@ -1,5 +1,5 @@
-#ifndef IMAGE_TOYS_FILE_UTILS_H
-#define IMAGE_TOYS_FILE_UTILS_H
+#ifndef SHADY_FILE_UTILS_H
+#define SHADY_FILE_UTILS_H
 
 #include <string>
 
@@ -12,4 +12,4 @@ void files_in_directory(const std::string &directory, std::vector<std::string> &
  */
 std::string get_cwd();
 
-#endif //IMAGE_TOYS_FILE_UTILS_H
+#endif //SHADY_FILE_UTILS_H
