@@ -129,7 +129,7 @@ void render_port_connector(int id, bool is_input,
                     context.xform->name(),
                     context.output_port->name(),
                     state.connecting_xform->name(),
-                    state.connecting_output->name()
+                    state.connecting_input->name()
             );
             state.graph->evaluate();
           }
