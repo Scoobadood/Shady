@@ -35,6 +35,7 @@ add_library(Xform SHARED
         src/xforms/merge-channel-xform.cpp include/xforms/merge-channel-xform.h
         src/xforms/save-file-xform.cpp include/xforms/save-file-xform.h
         src/xforms/brightness-xform.cpp include/xforms/brightness-xform.h
+        src/xforms/gaussian-blur-xform.cpp include/xforms/gaussian-blur-xform.h
         )
 
 target_include_directories(Xform
