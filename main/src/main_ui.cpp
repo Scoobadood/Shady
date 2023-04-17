@@ -74,7 +74,9 @@ int main(int argc, const char *argv[]) {
                     argv[1],
                     e.what());
     }
-
+  }
+  if( state.graph == nullptr) {
+    state.graph = std::make_shared<XformGraph>();
   }
 
   auto theme = Theme::theme();
