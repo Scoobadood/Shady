@@ -44,6 +44,11 @@ inline GLint get_uniform_loc_with_logging(const char *type, GLuint prog_id, cons
   return loc;
 }
 
+void Shader::set_vec2(const std::string &name, const glm::vec2 &vec) const {
+  auto loc = get_uniform_loc_with_logging("vec2", id_, name.c_str());
+  glUniform2fv(loc, 1, (float*) glm::value_ptr(vec));
+}
+
 void Shader::set_vec3(const std::string &name, const glm::vec3 &vec) const {
   auto loc = get_uniform_loc_with_logging("vec3", id_, name.c_str());
   glUniformMatrix3fv(loc, 1, GL_FALSE, glm::value_ptr(vec));
@@ -52,6 +57,11 @@ void Shader::set_vec3(const std::string &name, const glm::vec3 &vec) const {
 void Shader::set_mat4(const std::string &name, const glm::mat4 &mat) const {
   auto loc = get_uniform_loc_with_logging("matrix4fv", id_, name.c_str());
   glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(mat));
+}
+
+void Shader::set_floats(const std::string &name, int count, float* f) const {
+  auto loc = get_uniform_loc_with_logging("1fv", id_, name.c_str());
+  glUniform1fv(loc, count, f);
 }
 
 void Shader::set_float(const std::string &name, float f) const {

@@ -15,13 +15,13 @@ public:
   ~Shader();
 
   // @return true if the shader is ready.
-  inline bool is_good() const { return is_ready_;}
+  inline bool is_good() const { return is_ready_; }
 
   // use/activate the shader
   void use() const;
 
   // get_attribute_location
-  uint32_t get_attribute_location(const std::string& attribute_name);
+  uint32_t get_attribute_location(const std::string &attribute_name);
 
   // utility uniform functions
   void set_int(const std::string &name, int32_t value) const;
@@ -30,11 +30,15 @@ public:
 
   void set_float(const std::string &name, float f0, float f1, float f2) const;
 
+  void set_floats(const std::string &name, int count, float *f) const;
+
   void set4iv(const std::string &name, int32_t count, const GLint *v4) const;
 
   void set4b(const std::string &name, bool v0[4]) const;
 
   void set2ui(const std::string &name, GLuint v0, GLuint v1) const;
+
+  void set_vec2(const std::string &name, const glm::vec2 &vec) const;
 
   void set_vec3(const std::string &name, const glm::vec3 &vec) const;
 
