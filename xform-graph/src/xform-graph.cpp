@@ -472,7 +472,8 @@ void XformGraph::update_dependency_order() {
 
   while (!no_marks.empty()) {
     auto it = no_marks.begin();
-    const auto& n = *it;
+    // Can't make this a reference as it gets erased and we use n subsequently.
+    const auto n = *it;
     no_marks.erase(it);
     visit(n);
   }
