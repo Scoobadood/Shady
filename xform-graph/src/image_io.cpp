@@ -15,8 +15,13 @@
 int32_t
 load_image(const std::string &file_name, int &width, int &height, GLubyte *&pixel_data) {
   FILE *f = fopen(file_name.c_str(), "r");
+  if( !f ) {
+    spdlog::error("File not found: {}", file_name);
+    return IO_FAIL;
+  }
   int channels;
   pixel_data = stbi_load_from_file(f, &width, &height, &channels, STBI_default);
+  fclose(f);
   if (pixel_data == nullptr) {
     spdlog::error("Cannot load image: {}", file_name);
     return IO_FAIL;
