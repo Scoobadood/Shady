@@ -188,7 +188,7 @@ private:
 
   std::deque<std::shared_ptr<Xform>> ordered_xforms_;
 
-  std::map<std::pair<std::string, std::string>, std::shared_ptr<void>> results_;
+  std::map<XformOutputPort, std::shared_ptr<void>> results_;
   std::map<std::string, std::shared_ptr<Xform>> xforms_by_name_;
 
   std::map<std::pair<std::string, std::string>, std::pair<std::string, std::string>> connections_from_;

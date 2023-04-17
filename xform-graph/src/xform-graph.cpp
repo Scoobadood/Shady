@@ -46,7 +46,7 @@ XformGraph::add_xform(const std::shared_ptr<Xform> &xform) {
 std::shared_ptr<void> XformGraph::result_at(const XformOutputPort &port) const {
   output_pd_or_throw(port);
 
-  auto it = results_.find({port.xform_name, port.port_name});
+  auto it = results_.find(port);
   if (it != results_.end())
     return it->second;
 
@@ -98,7 +98,7 @@ void XformGraph::delete_xform(const std::string &name) {
 
   // Delete cached outputs
   for (auto op_iter = results_.begin(); op_iter != results_.end();) {
-    if (op_iter->first.first != name) {
+    if (op_iter->first.xform_name != name) {
       ++op_iter;
     } else {
       op_iter = results_.erase(op_iter);
@@ -297,7 +297,7 @@ bool XformGraph::evaluate() {
     for (const auto &ipd: xf->input_port_descriptors()) {
       auto iter = connections_to_.find({xf->name(), ipd->name()});
       if (iter == connections_to_.end()) continue;
-      inputs.emplace(ipd->name(), results_.at({iter->second}));
+      inputs.emplace(ipd->name(), results_.at({iter->second.first, iter->second.second}));
     }
 
     uint32_t err;
@@ -305,7 +305,7 @@ bool XformGraph::evaluate() {
     auto out = xf->apply(inputs, err, err_msg);
     if (err == XFORM_OK) {
       for (const auto &o: out) {
-        results_.emplace(make_pair(xf->name(), o.first), o.second);
+        results_.emplace(XformOutputPort{xf->name(), o.first}, o.second);
       }
       states_[xf->name()] = GOOD;
       evaluation_times_[xf->name()] = ::clock();
