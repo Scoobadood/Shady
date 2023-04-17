@@ -78,7 +78,7 @@ void compute_kernel(int32_t kernel_radius, float* kernel, float sigma) {
   auto b = 1.0f / (sqrtf( 2.0f * M_PI ) * sigma);
   float total = 0.0f;
   for( auto i = -kernel_radius; i<= kernel_radius; ++i) {
-    kernel[i+kernel_radius] =  b * exp(-(i*i) / (2.0f * sigma * sigma));
+    kernel[i+kernel_radius] =  b * exp(-float(i*i) / (2.0f * sigma * sigma));
     total +=kernel[i+kernel_radius];
   }
   for( auto i = -kernel_radius; i<= kernel_radius; ++i) {
