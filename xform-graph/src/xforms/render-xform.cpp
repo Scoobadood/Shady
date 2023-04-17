@@ -93,6 +93,7 @@ void RenderXform::init_framebuffer() {
 
   // Unbind the FBO.
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  gl_check_error_and_halt("init_framebuffer()");
 }
 
 
@@ -105,6 +106,7 @@ void RenderXform::start_render() const{
   glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
 
   glBindVertexArray(vao_id_);
+  gl_check_error_and_halt("start_render()");
 }
 
 /*
@@ -113,4 +115,5 @@ void RenderXform::start_render() const{
 void RenderXform::end_render(){
   spdlog::debug("RenderXform::end_render()");
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  gl_check_error_and_halt("end_render()");
 }

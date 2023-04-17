@@ -62,7 +62,7 @@ LoadFileXform::do_apply(const std::map<std::string, std::shared_ptr<void>> &inpu
                width, height, 0,
                GL_RGB, GL_UNSIGNED_BYTE,
                image_bytes);
-  gl_check_error_and_halt("generate_texture");
+  gl_check_error_and_halt("load file to texture");
   free(image_bytes);
 
   spdlog::info("Loaded file from {} into txid {}", file_name, image_tx_);
