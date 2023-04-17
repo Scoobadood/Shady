@@ -21,25 +21,28 @@ layout (location=0) out vec4 fragColor;
 
 in vec2 uv_tex_coord;
 
+const int KERNEL_RADIUS = 17;
+const int KERNEL_SIZE = KERNEL_RADIUS * 2 + 1;
 uniform sampler2D input_image;
-uniform float coeff[25];
+uniform float coeff[KERNEL_SIZE];
 uniform vec2 pixel_size;
+uniform bool horizontal_pass;
 
 void main() {
-  vec2 hor=vec2(pixel_size.x, 0);
-  vec2 ver=vec2(0, pixel_size.y);
+  vec2 offset = (horizontal_pass)
+    ? vec2(pixel_size.x, 0)
+    : vec2(0, pixel_size.y);
   vec3 col = vec3(0);
-  for( int i=0; i<5; ++i ) {
-    for( int j=0; j<5; ++j ) {
-      vec2 coord = uv_tex_coord.x + (hor * ( i - 2 )) + (ver * ( j - 2 ));
-      col = col + texture(input_image, coord).rgb * coeff[(5*i)+j];
-    }
+  for( int i=-KERNEL_RADIUS; i<=KERNEL_RADIUS; ++i ) {
+      vec2 coord = uv_tex_coord + offset * i;
+      col = col + texture(input_image, coord).rgb * coeff[i + KERNEL_RADIUS];
   }
   fragColor=vec4(col , 1);
 }
 )"};
 }
 
+const int32_t MAX_KERNEL_RADIUS = 17;
 
 std::string GaussianBlurXform::type() const {
   return TYPE;
@@ -71,27 +74,29 @@ void GaussianBlurXform::init() {
   is_init_ = (shader_ != nullptr);
 }
 
-/*
- * 01 04 07 04 01
- * 04 16 26 16 04
- * 07 26 41 26 07
- * 04 16 26 16 04
- * 01 04 07 04 01
- *
- * 1/273
- */
+void compute_kernel(int32_t kernel_radius, float* kernel, float sigma) {
+  auto b = 1.0f / (sqrtf( 2.0f * M_PI ) * sigma);
+  float total = 0.0f;
+  for( auto i = -kernel_radius; i<= kernel_radius; ++i) {
+    kernel[i+kernel_radius] =  b * exp(-(i*i) / (2.0f * sigma * sigma));
+    total +=kernel[i+kernel_radius];
+  }
+  for( auto i = -kernel_radius; i<= kernel_radius; ++i) {
+    kernel[i+kernel_radius] /= total;
+  }
+}
+
 void GaussianBlurXform::bind_shader_variables() {
   spdlog::debug("GaussianBlur::bind_shader_variables()");
   gl_check_error_and_halt("GaussianBlurXform::bind_shader_variables()");
 
-  float coeff[25]{
-          1. / 273., 4. / 273., 7. / 273., 4. / 273., 1. / 273.,
-          4. / 273., 16. / 273., 26. / 273., 16. / 273., 4. / 273.,
-          7. / 273., 26. / 273., 41. / 273., 26. / 273., 7. / 273.,
-          4. / 273., 16. / 273., 26. / 273., 16. / 273., 4. / 273.,
-          1. / 273., 4. / 273., 7. / 273., 4. / 273., 1. / 273.
-  };
-  shader_->set_floats("coeff", 25, coeff);
+  float sigma;
+  config().get("sigma", sigma);
+
+  float coeff[MAX_KERNEL_RADIUS * 2 + 1];
+  compute_kernel(MAX_KERNEL_RADIUS, coeff, sigma);
+
+  shader_->set_floats("coeff", MAX_KERNEL_RADIUS * 2 + 1, coeff);
   shader_->set_vec2("pixel_size", glm::vec2(1.0f/453.0f, 1.0f/340.0f));
   gl_check_error_and_halt("GaussianBlurXform::set_vec2()");
 }
