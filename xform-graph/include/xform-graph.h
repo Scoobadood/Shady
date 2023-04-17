@@ -46,6 +46,9 @@ struct XformInputPort : public Port {
   XformInputPort(const std::string &xform_name, const std::string &port_name)//
           : Port{xform_name, port_name}//
   {}
+  bool operator==(const XformInputPort& other ) const {
+    return xform_name == other.xform_name && port_name == other.port_name;
+  }
   friend bool operator<(const XformInputPort &lhs, const XformInputPort &rhs) {
     if (lhs.xform_name < rhs.xform_name) return true;
     if (lhs.xform_name > rhs.xform_name) return false;
@@ -58,6 +61,9 @@ struct XformOutputPort : public Port {
   XformOutputPort(const std::string &xform_name, const std::string &port_name)//
           : Port{xform_name, port_name}//
   {}
+  bool operator==(const XformOutputPort& other ) const {
+    return xform_name == other.xform_name && port_name == other.port_name;
+  }
 
   friend bool operator<(const XformOutputPort &lhs, const XformOutputPort &rhs) {
     if (lhs.xform_name < rhs.xform_name) return true;
@@ -173,6 +179,9 @@ public:
   std::string next_free_name_like(const std::string & base_name);
 
 private:
+  void disconnect_internal(const XformOutputPort output,
+                           const XformInputPort input);
+
   void validate_xform(const std::string &xform_name) const;
 
   std::shared_ptr<const OutputPortDescriptor>
@@ -190,8 +199,12 @@ private:
   std::map<XformOutputPort, std::shared_ptr<void>> results_;
   std::map<std::string, std::shared_ptr<Xform>> xforms_by_name_;
 
-  std::map<XformOutputPort, XformInputPort> connections_from_;
+  /* Can be multiple connections from an output port to other inputs */
+  std::multimap<XformOutputPort, XformInputPort> connections_from_;
+
+  /* Only one input to an InputPort is allowed */
   std::map<XformInputPort, XformOutputPort> connections_to_;
+
   std::map<std::string, XformState> states_;
   std::map<std::string, uintmax_t> evaluation_times_;
 };

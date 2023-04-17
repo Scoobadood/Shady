@@ -9,6 +9,10 @@
 
 #include <spdlog/spdlog-inl.h>
 
+/*
+ * Confirm that an xform with this name exists and quietly succeed
+ * or else throw an exception.
+ */
 void XformGraph::validate_xform(const std::string &xform_name) const {
   auto it = xforms_by_name_.find(xform_name);
   if (it != xforms_by_name_.end())
@@ -71,7 +75,7 @@ void XformGraph::delete_xform(const std::string &name) {
 
       // Only one connection is allowed into a port so the
       // connection_to_ entry for this from can be deleted
-      connections_to_.erase({from_it->second.xform_name, from_it->second.port_name});
+      connections_to_.erase(from_it->second);
 
       from_it = connections_from_.erase(from_it);
     } else {
@@ -79,13 +83,19 @@ void XformGraph::delete_xform(const std::string &name) {
     }
   }
 
-
   // Delete the connections to this xform
   for (auto to_it = connections_to_.begin(); to_it != connections_to_.end();) {
     if (to_it->first.xform_name == name) {
-      // Currently only one connection is allowed from a port to another
-      // So erase the connection_from_ to this.
-      connections_from_.erase({to_it->second.xform_name, to_it->second.port_name});
+
+      // We permit many connections from a port and so we want to be sure we erase the
+      // correct one. Check over the range of viable connections til we find the right one.
+      auto erase_range = connections_from_.equal_range(to_it->second);
+      for (auto erase_it = erase_range.first; erase_it != erase_range.second; ++erase_it) {
+        if (erase_it->second == to_it->first) {
+          connections_from_.erase(erase_it);
+          break;
+        }
+      }
 
       to_it = connections_to_.erase(to_it);
     } else {
@@ -150,8 +160,44 @@ XformGraph::input_pd_or_throw(const XformInputPort &port) const {
 }
 
 
+/**
+ * Remove any connection from output to input.
+ * Does not assume that such a connection exists and if it doesn't
+ * then it will fail silently.
+ * @param output
+ * @param input
+ */
+void XformGraph::disconnect_internal(const XformOutputPort output,
+                         const XformInputPort input) {
+  auto input_it = connections_to_.find(input);
+  if( input_it != connections_to_.end() && input_it->second == output) {
+    connections_to_.erase(input_it);
+  }
+
+  auto output_it_range = connections_from_.equal_range(output);
+  for( auto output_it = output_it_range.first; output_it != output_it_range.second; ) {
+    if( output_it->second == input) {
+      output_it = connections_from_.erase(output_it);
+    } else {
+      ++output_it;
+    }
+  }
+}
+
+
 void XformGraph::connect(const XformOutputPort &from,
                          const XformInputPort &to) {
+  // Handle the case where this connection exists.
+  auto it = connections_to_.find(to);
+  if (it != connections_to_.end()) {
+    if (it->second == from) {
+      spdlog::warn("Connection already exists between {}::{} and {}::{}. Not adding a new one",
+                   from.xform_name, from.port_name,
+                   to.xform_name, to.port_name);
+      return;
+    }
+  }
+
 
   auto from_pd = output_pd_or_throw(from);
   auto to_pd = input_pd_or_throw(to);
@@ -165,38 +211,17 @@ void XformGraph::connect(const XformOutputPort &from,
 
   // TODO: Check for introduced loops
 
-  // Remove any existing from connection
-  auto conn_it = connections_from_.find(from);
-  if (conn_it != connections_from_.end()) {
-    spdlog::info("Removing existing connection from {}::{} to {}::{}",
-                 from.xform_name, from.port_name,
-                 conn_it->second.xform_name, conn_it->second.port_name);
-    connections_from_.erase(conn_it);
-    connections_to_.erase(conn_it->second);
-  }
-
-  // And any existing to connection
+  // Remove any existing to connection.
   auto to_conn_it = connections_to_.find(to);
   if (to_conn_it != connections_to_.end()) {
     spdlog::info("Removing existing connection to {}::{} from {}::{}",
                  to.xform_name, to.port_name,
                  to_conn_it->second.xform_name, to_conn_it->second.port_name);
-
-    connections_to_.erase(to_conn_it);
-    connections_from_.erase(to_conn_it->second);
+    disconnect_internal(to_conn_it->second, to);
   }
 
-  if( connections_from_.find(from) == connections_from_.end()) {
-    connections_from_.emplace(from, to);
-  } else {
-    connections_from_.at(from) = to;
-  }
-
-  if (connections_to_.find(to) == connections_to_.end()) {
-    connections_to_.emplace(to, from);
-  } else {
-    connections_to_.at(to) = from;
-  }
+  connections_from_.emplace(from, to);
+  connections_to_.emplace(to,from);
 
   update_dependency_order();
   for (const auto &xf: ordered_xforms_) {
@@ -214,9 +239,7 @@ XformGraph::disconnect(const XformInputPort &input) {
     return;
   }
 
-
-  connections_from_.erase({it->second.xform_name, it->second.port_name});
-  connections_to_.erase(it);
+  disconnect_internal(it->second, input);
 
   update_dependency_order();
   for (const auto &xf: ordered_xforms_) {
@@ -243,8 +266,7 @@ XformGraph::disconnect(const XformOutputPort &output,
     return;
   }
 
-  connections_from_.erase({it->second.xform_name, it->second.port_name});
-  connections_to_.erase(it);
+  disconnect_internal(output, input);
 
   update_dependency_order();
   for (const auto &xf: ordered_xforms_) {
