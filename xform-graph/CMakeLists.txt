@@ -19,6 +19,7 @@ add_library(Xform SHARED
         src/xform-graph.cpp include/xform-graph.h
         src/xforms/xform-port.cpp include/xforms/xform-port.h
         src/xforms/xform-config.cpp include/xforms/xform-config.h
+        src/xform-exceptions.cc include/xform-exceptions.h
 
         # Graph IO
         src/xform-io.cpp include/xform-io.h

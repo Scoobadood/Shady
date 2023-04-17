@@ -36,9 +36,6 @@ void main() {
 }
 )"};
 
-
-uint32_t SplitChannelXform::next_idx_ = 0;
-
 std::string SplitChannelXform::type() const {
   return TYPE;
 }
@@ -62,10 +59,6 @@ void SplitChannelXform::init() {
   is_init_ = split_prog_->is_good();
 }
 
-
-SplitChannelXform::SplitChannelXform() //
-        : SplitChannelXform(fmt::format("{}_{}", TYPE, next_idx_++)) //
-{}
 
 SplitChannelXform::~SplitChannelXform() {
   glDeleteTextures(4, texture_ids_);

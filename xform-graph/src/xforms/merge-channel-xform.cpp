@@ -49,8 +49,6 @@ void main() {
 )"};
 }
 
-uint32_t MergeChannelXform::next_idx_ = 0;
-
 std::string MergeChannelXform::type() const {
   return TYPE;
 }
@@ -76,10 +74,6 @@ void MergeChannelXform::init() {
   if (merge_prog_) is_init_ = true;
 }
 
-
-MergeChannelXform::MergeChannelXform() //
-        : MergeChannelXform(fmt::format("{}_{}", TYPE, next_idx_++)) //
-{}
 
 MergeChannelXform::~MergeChannelXform() {
   glDeleteTextures(1, &texture_id_);

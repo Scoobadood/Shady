@@ -27,8 +27,6 @@ void main() {
 }
 
 
-uint32_t BrightnessXform::next_idx_ = 0;
-
 std::string BrightnessXform::type() const {
   return TYPE;
 }
@@ -40,12 +38,6 @@ static const std::vector<const XformConfig::PropertyDescriptor> BRIGHTNESS_PROPE
 BrightnessXform::BrightnessXform(const std::string &name) //
         : SingleIOShaderXform(name  //
         , XformConfig(BRIGHTNESS_PROPERTIES)) //
-{
-  config().set("brightness", 100);
-}
-
-BrightnessXform::BrightnessXform() //
-        : BrightnessXform(fmt::format("{}_{}", TYPE, next_idx_++))  //
 {
   config().set("brightness", 0);
 }

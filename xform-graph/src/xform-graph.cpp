@@ -1,33 +1,57 @@
 #include "xform-graph.h"
+#include "xform-exceptions.h"
 #include "xforms/xform.h"
 
 #include <set>
 #include <map>
 #include <deque>
+#include <regex>
 
 #include <spdlog/spdlog-inl.h>
 
-std::shared_ptr<void> XformGraph::output_from(const std::string &xform_name, const std::string &port_name) const {
-  auto it = outputs_.find({xform_name, port_name});
-  if (it == outputs_.end()) return nullptr;
-  return it->second;
+void XformGraph::validate_xform(const std::string &xform_name) const {
+  auto it = xforms_by_name_.find(xform_name);
+  if (it != xforms_by_name_.end())
+    return;
+
+  throw XformGraphException(fmt::format("No such xform : {}", xform_name),
+                            ERR_NO_SUCH_XFORM);
 }
 
 /*
  * Add a new transform to the graph. If it's successfully added
  * initialise its state.
  */
-bool
+void
 XformGraph::add_xform(const std::shared_ptr<Xform> &xform) {
+  if (!xform)
+    throw XformGraphException(fmt::format("Xform is null in add_xform()."));
+
+
   if (xforms_by_name_.find(xform->name()) != xforms_by_name_.end()) {
-    spdlog::error("Xform {} already in graph.", xform->name());
-    return false;
+    throw XformGraphException(
+            fmt::format("Xform {} already in graph in add_xform().", xform->name()),
+            ERR_XFORM_EXISTS);
   }
 
   xforms_by_name_.emplace(xform->name(), xform);
   evaluation_times_[xform->name()] = 0;
   refresh_state(xform);
-  return true;
+}
+
+
+/**
+ * @return the computed result for a particular transform and port name.
+ */
+std::shared_ptr<void> XformGraph::result_at(const XformOutputPort &port) const {
+  output_pd_or_throw(port);
+
+  auto it = results_.find({port.xform_name, port.port_name});
+  if (it != results_.end())
+    return it->second;
+
+  spdlog::warn("No result for {}::{}", port.xform_name, port.port_name);
+  return nullptr;
 }
 
 /*
@@ -36,9 +60,8 @@ XformGraph::add_xform(const std::shared_ptr<Xform> &xform) {
  * and associated metadata.
  * Refresh the state of downstream xforms.
  */
-bool XformGraph::delete_xform(const std::string &name) {
-  auto it = xforms_by_name_.find(name);
-  if (it == xforms_by_name_.end()) return false;
+void XformGraph::delete_xform(const std::string &name) {
+  validate_xform(name);
 
   // Delete the connections from this xform to others (remember their names)
   std::set<std::string> impacted_xforms;
@@ -74,16 +97,16 @@ bool XformGraph::delete_xform(const std::string &name) {
   evaluation_times_.erase(name);
 
   // Delete cached outputs
-  for (auto op_iter = outputs_.begin(); op_iter != outputs_.end();) {
+  for (auto op_iter = results_.begin(); op_iter != results_.end();) {
     if (op_iter->first.first != name) {
       ++op_iter;
     } else {
-      op_iter = outputs_.erase(op_iter);
+      op_iter = results_.erase(op_iter);
     }
   }
 
   // And finally remove the xform.
-  xforms_by_name_.erase(it);
+  xforms_by_name_.erase(name);
 
   // Recompute the dependency sequences
   update_dependency_order();
@@ -92,98 +115,101 @@ bool XformGraph::delete_xform(const std::string &name) {
   for (const auto &xf: ordered_xforms_) {
     refresh_state(xf);
   }
-
-  return true;
 }
 
 
 std::shared_ptr<Xform> XformGraph::xform(const std::string &name) const {
-  auto it = xforms_by_name_.find(name);
-  if (it == xforms_by_name_.end()) return nullptr;
-  return it->second;
+  validate_xform(name);
+  return  xforms_by_name_.at(name);
 }
 
-bool XformGraph::add_connection(const std::string &from_xform_name,
-                                const std::string &from_port_name,
-                                const std::string &to_xform_name,
-                                const std::string &to_port_name) {
-  auto it = xforms_by_name_.find(from_xform_name);
-  if (it == xforms_by_name_.end()) {
-    spdlog::error("No such xform: {}", from_xform_name);
-    return false;
-  }
-  auto from_xform = it->second;
+std::shared_ptr<const OutputPortDescriptor>
+XformGraph::output_pd_or_throw(const XformOutputPort &port) const {
+  validate_xform(port.xform_name);
+  auto xform = xforms_by_name_.at(port.xform_name);
+  auto pd = xform->output_port_descriptor_for_port(port.port_name);
+  if (pd) return pd;
 
-  it = xforms_by_name_.find(to_xform_name);
-  if (it == xforms_by_name_.end()) {
-    spdlog::error("No such xform: {}", from_xform_name);
-    return false;
-  }
-  auto to_xform = it->second;
+  throw XformGraphException(fmt::format("No output port : {} on xform {}", port.xform_name, port.port_name),
+                            ERR_NO_SUCH_OUTPUT_PORT);
+}
 
-  auto from_pd = from_xform->output_port_descriptor_for_port(from_port_name);
-  if (from_pd == nullptr) {
-    spdlog::error("No port : {} on xform {}", from_port_name, from_xform_name);
-    return false;
-  }
 
-  auto to_pd = to_xform->input_port_descriptor_for_port(to_port_name);
-  if (to_pd == nullptr) {
-    spdlog::error("No port : {} on xform {}", to_port_name, to_xform_name);
-    return false;
-  }
+/**
+ * @return the input port descriptor for the given transform and name or else throw an exception.
+ */
+std::shared_ptr<const InputPortDescriptor>
+XformGraph::input_pd_or_throw(const XformInputPort &port) const {
+  validate_xform(port.xform_name);
+  auto xform = xforms_by_name_.at(port.xform_name);
+  auto pd = xform->input_port_descriptor_for_port(port.port_name);
+  if (pd) return pd;
+
+  throw XformGraphException(fmt::format("No input port : {} on xform {}", port.xform_name, port.port_name),
+                            ERR_NO_SUCH_INPUT_PORT);
+}
+
+
+void XformGraph::connect(const XformOutputPort &from,
+                         const XformInputPort &to) {
+
+  auto from_pd = output_pd_or_throw(from);
+  auto to_pd = input_pd_or_throw(to);
 
   if (!to_pd->is_compatible(*from_pd)) {
-    spdlog::error("Ports {}::{} and {}::{} are incompatible",
-                  from_xform_name, from_port_name,
-                  to_xform_name, to_port_name);
-    return false;
+    throw XformGraphException(fmt::format("Ports {}::{} and {}::{} are incompatible",
+                                          from.xform_name, from.port_name,
+                                          to.xform_name, to.port_name),
+                              ERR_PORTS_ARE_INCOMPATIBLE);
   }
 
   // TODO: Check for introduced loops
 
   // Remove any existing from connection
-  auto conn_it = connections_from_.find({from_xform_name, from_port_name});
+  auto conn_it = connections_from_.find({from.xform_name, from.port_name});
   if (conn_it != connections_from_.end()) {
     auto old_to_xform = conn_it->second.first;
     auto old_to_port = conn_it->second.second;
     spdlog::info("Removing existing connection from {}::{} to {}::{}",
-                 from_xform_name, from_port_name,
+                 from.xform_name, from.port_name,
                  old_to_xform, old_to_port);
     connections_from_.erase(conn_it);
     connections_to_.erase({old_to_xform, old_to_port});
   }
 
   // And any existing to connection
-  conn_it = connections_to_.find({to_xform_name, to_port_name});
+  conn_it = connections_to_.find({to.xform_name, to.port_name});
   if (conn_it != connections_to_.end()) {
     auto old_from_xform = conn_it->second.first;
     auto old_from_port = conn_it->second.second;
     spdlog::info("Removing existing connection to {}::{} from {}::{}",
-                 to_xform_name, to_port_name,
+                 to.xform_name, to.port_name,
                  old_from_xform, old_from_port);
 
     connections_to_.erase(conn_it);
     connections_from_.erase({old_from_xform, old_from_port});
   }
 
-  connections_from_[{from_xform_name, from_port_name}] = {to_xform_name, to_port_name};
-  connections_to_[{to_xform_name, to_port_name}] = {from_xform_name, from_port_name};
+  connections_from_[{from.xform_name, from.port_name}] = {to.xform_name, to.port_name};
+  connections_to_[{to.xform_name, to.port_name}] = {from.xform_name, from.port_name};
 
   update_dependency_order();
   for (const auto &xf: ordered_xforms_) {
     refresh_state(xf);
   }
-  return true;
 }
 
-bool XformGraph::remove_connection(const std::string &to_xform_name,
-                                   const std::string &to_port) {
-  auto it = connections_to_.find({to_xform_name, to_port});
+void
+XformGraph::disconnect(const XformInputPort &input) {
+  input_pd_or_throw(input);
+
+  auto it = connections_to_.find({input.xform_name, input.port_name});
   if (it == connections_to_.end()) {
-    spdlog::error("No such xform: {}", to_xform_name);
-    return false;
+    spdlog::warn(fmt::format("Port {}::{} is not connected in disconnect()", input.xform_name, input.port_name));
+    return;
   }
+
+
   connections_from_.erase(it->second);
   connections_to_.erase(it);
 
@@ -191,7 +217,34 @@ bool XformGraph::remove_connection(const std::string &to_xform_name,
   for (const auto &xf: ordered_xforms_) {
     refresh_state(xf);
   }
-  return true;
+}
+
+void
+XformGraph::disconnect(const XformOutputPort &output,
+                       const XformInputPort &input) {
+  input_pd_or_throw(input);
+
+  auto it = connections_to_.find({input.xform_name, input.port_name});
+  if (it == connections_to_.end()) {
+    spdlog::warn(fmt::format("Port {}::{} is not connected in disconnect()", input.xform_name, input.port_name));
+    return;
+  }
+
+  // Validate that the output is correct
+  if (it->second.first != output.xform_name || it->second.second != output.port_name) {
+    spdlog::warn(fmt::format("Port {}::{} not connected to {}::{} in disconnect()",
+                             output.xform_name, output.port_name,
+                             input.xform_name, input.port_name));
+    return;
+  }
+
+  connections_from_.erase(it->second);
+  connections_to_.erase(it);
+
+  update_dependency_order();
+  for (const auto &xf: ordered_xforms_) {
+    refresh_state(xf);
+  }
 }
 
 std::set<std::string>
@@ -223,10 +276,10 @@ bool XformGraph::evaluate() {
   using namespace std;
 
   set<string> failed_deps;
-  outputs_.clear();
+  results_.clear();
   for (const auto &xf: ordered_xforms_) {
-    auto state =state_for(xf->name());
-    if ( state != GOOD && state != STALE) continue;
+    auto state = state_for(xf->name());
+    if (state != GOOD && state != STALE) continue;
 
     // Obtain the set of dependencies.
     auto deps = dependencies_for(xf);
@@ -244,7 +297,7 @@ bool XformGraph::evaluate() {
     for (const auto &ipd: xf->input_port_descriptors()) {
       auto iter = connections_to_.find({xf->name(), ipd->name()});
       if (iter == connections_to_.end()) continue;
-      inputs.emplace(ipd->name(), outputs_.at({iter->second}));
+      inputs.emplace(ipd->name(), results_.at({iter->second}));
     }
 
     uint32_t err;
@@ -252,7 +305,7 @@ bool XformGraph::evaluate() {
     auto out = xf->apply(inputs, err, err_msg);
     if (err == XFORM_OK) {
       for (const auto &o: out) {
-        outputs_.emplace(make_pair(xf->name(), o.first), o.second);
+        results_.emplace(make_pair(xf->name(), o.first), o.second);
       }
       states_[xf->name()] = GOOD;
       evaluation_times_[xf->name()] = ::clock();
@@ -276,38 +329,47 @@ XformGraph::xforms() const {
   return xforms;
 }
 
-std::vector<std::pair<std::pair<std::string, std::string>, std::pair<std::string, std::string>>>
+std::vector<std::pair<XformOutputPort, XformInputPort>>
 XformGraph::connections() const {
   using namespace std;
-  vector<pair<pair<string, string>, pair<string, string>>> conns;
+  vector<pair<XformOutputPort, XformInputPort>> conns;
   conns.reserve(connections_from_.size());
   for (auto &fcon: connections_from_) {
-    conns.emplace_back(fcon);
+    conns.emplace_back(XformOutputPort{fcon.first.first, fcon.first.second},
+                       XformInputPort{fcon.second.first, fcon.second.second});
   }
   return conns;
 }
 
-std::shared_ptr<std::pair<std::string, std::string>>
-XformGraph::connection_from(const std::string &xform, const std::string &port) const {
-  auto it = connections_from_.find({xform, port});
+std::shared_ptr<XformInputPort>
+XformGraph::connection_from(const XformOutputPort &port) const {
+  auto it = connections_from_.find({port.xform_name, port.port_name});
   if (it == connections_from_.end()) return nullptr;
-  return std::make_shared<std::pair<std::string, std::string>>(it->second);
+  return std::make_shared<XformInputPort>(it->second.first, it->second.second);
 }
 
-std::shared_ptr<std::pair<std::string, std::string>>
-XformGraph::connection_to(const std::string &xform, const std::string &port) const {
-  auto it = connections_to_.find({xform, port});
+std::shared_ptr<XformOutputPort>
+XformGraph::connection_to(const XformInputPort &input_port) const {
+  auto it = connections_to_.find({input_port.xform_name, input_port.port_name});
   if (it == connections_to_.end()) return nullptr;
-  return std::make_shared<std::pair<std::string, std::string>>(it->second);
+  return std::make_shared<XformOutputPort>(it->second.first, it->second.second);
 }
 
-bool XformGraph::input_is_connected(const std::string &xform, const std::string &port) const {
-  auto iter = connections_to_.find({xform, port});
+/*
+ * @return true if the given input is connected
+ */
+bool XformGraph::is_connected(const XformInputPort &port) const {
+  input_pd_or_throw(port);
+  auto iter = connections_to_.find({port.xform_name, port.port_name});
   return !(iter == connections_to_.end());
 }
 
-bool XformGraph::output_is_connected(const std::string &xform, const std::string &port) const {
-  auto iter = connections_from_.find({xform, port});
+/*
+ * @return false if the given output is connected
+ */
+bool XformGraph::is_connected(const XformOutputPort &port) const {
+  output_pd_or_throw(port);
+  auto iter = connections_from_.find({port.xform_name, port.port_name});
   return !(iter == connections_from_.end());
 }
 
@@ -315,6 +377,7 @@ bool XformGraph::output_is_connected(const std::string &xform, const std::string
  * We cache states and assume that each xform has a state.
  */
 XformState XformGraph::state_for(const std::string &xform_name) const {
+  validate_xform(xform_name);
   return states_.at(xform_name);
 }
 
@@ -392,9 +455,9 @@ void XformGraph::update_dependency_order() {
 
     // nodes_to_visit... downstream of n
     for (const auto &opd: xforms_by_name_.at(n)->output_port_descriptors()) {
-      auto c = connection_from(n, opd->name());
+      auto c = connection_from({n, opd->name()});
       if (c) {
-        visit(c->first);
+        visit(c->xform_name);
       }
     }
 
@@ -409,4 +472,33 @@ void XformGraph::update_dependency_order() {
     no_marks.erase(it);
     visit(n);
   }
+}
+
+/**
+ * @return a name of the form <xform_type_name>_NNN where the name is not used in the graph and
+ * NNN may be an arbitrary number of digits but will be only sufficient to guarantee a name's uniqueness.
+ * If there is no xform called 'xform_type_name' then this will be te returned value.
+ * Otherwise it will return xform_type_name_1, xform_type_name_2, xform_type_name_3 etc.
+ */
+std::string XformGraph::next_free_name_like(const std::string & base_name) {
+  // Simple case, we can use the base name directly.
+  if (xforms_by_name_.find(base_name) == xforms_by_name_.end()) return base_name;
+
+  // Shortlist all names of the form base_name_NNN where NNN is an arbitrary number of digits.
+  int32_t highest_index = 0;
+
+  auto pattern_string = fmt::format("{}_([0-9]+)", base_name);
+  std::regex pattern{pattern_string};
+
+  for (const auto &xform_name_pair: xforms_by_name_) {
+    auto xform_name = xform_name_pair.first;
+    std::smatch matches;
+    if (!regex_search(xform_name, matches, pattern)) continue;
+
+    // 0 is the whole string, 1 is the frame
+    int32_t idx = stoi(matches[1].str());
+    if (idx > highest_index) highest_index = idx;
+  }
+
+  return fmt::format("{}_{}", base_name, highest_index + 1);
 }

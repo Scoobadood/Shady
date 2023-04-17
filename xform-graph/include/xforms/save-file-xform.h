@@ -6,9 +6,7 @@
 
 class SaveFileXform : public Xform {
 public:
-  SaveFileXform();
-
-  explicit SaveFileXform(std::string name);
+  explicit SaveFileXform(std::string name = "SaveFile");
 
   ~SaveFileXform() override;
 
@@ -24,8 +22,6 @@ public:
   }
 
 private:
-  static uint32_t next_idx_;
-
   std::map<std::string, std::shared_ptr<void>>
   do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,
            uint32_t &err, std::string &err_msg) override;

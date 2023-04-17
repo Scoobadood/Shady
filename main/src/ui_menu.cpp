@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <string>
+#include "xform-exceptions.h"
 
 char **get_graph_file_names(uint32_t &num_files) {
   std::vector<std::string> files;
@@ -58,13 +59,19 @@ void do_open_file(bool &open_file, State &state) {
     if (ImGui::Button("Open")) {
       open_file = false;
       if (graph_file_names) {
-        auto graph = load_graph(graph_file_names[selected_item]);
-        if (graph) {
-          state.graph = graph;
-          state.graph_file_name = graph_file_names[selected_item];
-          state.graph->evaluate();
-          ImGui::CloseCurrentPopup();
+        try {
+          auto graph = load_graph(graph_file_names[selected_item]);
+          if (graph) {
+            state.graph = graph;
+            state.graph_file_name = graph_file_names[selected_item];
+            state.graph->evaluate();
+          }
+        } catch (XformGraphException &e) {
+          spdlog::error("Failed to load graph from :{}. Cause: {}",
+                        graph_file_names[selected_item],
+                        e.what());
         }
+        ImGui::CloseCurrentPopup();
       }
     }
 
@@ -82,14 +89,14 @@ void do_open_file(bool &open_file, State &state) {
   }
 }
 
-void   do_close_file(bool & close_file, State & state) {
+void do_close_file(bool &close_file, State &state) {
   state.graph_file_name = "";
   state.graph = nullptr;
   close_file = false;
 }
 
 void do_save_file(bool &save_file, State &state) {
-  if( state.graph_file_name.empty())
+  if (state.graph_file_name.empty())
     state.graph_file_name = "unknown.json";
   save_graph(state.graph_file_name, state.graph);
   save_file = false;

@@ -44,17 +44,24 @@ int32_t Command::error_no_property(const std::string &xform, const std::string &
   return CMD_NO_PROPERTY;
 }
 
-int32_t Command::error_no_error(){
+int32_t Command::error_no_error() {
   set_output("OK");
   return CMD_NO_ERROR;
 }
 
-int32_t Command::error_general_failure(){
-  set_output("Failed");
+int32_t Command::error_xform_exists(const std::string &xform_name) {
+  set_output(fmt::format("Xform with name {} already exists.", xform_name));
+  return CMD_XFORM_EXISTS;
+}
+
+int32_t Command::error_general_failure(const std::string &context) {
+  set_output(fmt::format("Failed{}", context.empty()
+                                     ? ""
+                                     : fmt::format(": {}", context)));
   return CMD_FAILED;
 }
 
-int32_t Command::error_no_such_xform(const std:: string& xform_type_) {
+int32_t Command::error_no_such_xform(const std::string &xform_type_) {
   set_output(fmt::format("Invalid xform: {}", xform_type_));
   return CMD_UNKNOWN_XFORM_TYPE;
 }

@@ -2,6 +2,7 @@
 #include "xform-graph.h"
 
 #include "spdlog/spdlog-inl.h"
+#include "xform-exceptions.h"
 
 Connect::Connect(const std::vector<std::string> &args) //
         : CommandWithArgs(args) //
@@ -38,15 +39,19 @@ int32_t Connect::execute(Context &context) {
     return CMD_PORTS_INCOMPATIBLE;
   }
 
-  auto fm = graph->connection_to(to_xform_, to_port_);
-  if (fm && fm->first == from_xform_ && fm->second == from_port_) {
+  auto fm = graph->connection_to({to_xform_, to_port_});
+  if (fm && fm->xform_name == from_xform_ && fm->port_name == from_port_) {
     set_output(fmt::format("{}:{} is already connected to {}:{}",
                            from_xform_, from_port_, to_xform_, to_port_));
     return CMD_PORTS_ALREADY_CONNECTED;
   }
 
-  if (!graph->add_connection(from_xform_, from_port_, to_xform_, to_port_)) {
-    return error_general_failure();
+  try {
+    graph->connect({from_xform_, from_port_},
+                   {to_xform_, to_port_});
+    return error_no_error();
+  } catch (XformGraphException &e) {
+    spdlog::error("Failed to connect. {}", e.what());
+    return error_general_failure(e.user_error_message());
   }
-  return error_no_error();
 }

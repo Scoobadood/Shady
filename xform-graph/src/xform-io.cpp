@@ -59,10 +59,10 @@ xform_write_graph(std::ostream &os, const std::shared_ptr<XformGraph> &graph) {
 
   for (const auto &conn: graph->connections()) {
     json c_j;
-    c_j["from_xform"] = conn.first.first;
-    c_j["from_port"] = conn.first.second;
-    c_j["to_xform"] = conn.second.first;
-    c_j["to_port"] = conn.second.second;
+    c_j["from_xform"] = conn.first.xform_name;
+    c_j["from_port"] = conn.first.port_name;
+    c_j["to_xform"] = conn.second.xform_name;
+    c_j["to_port"] = conn.second.port_name;
     g_j["connections"].emplace_back(c_j);
   }
 
@@ -137,14 +137,9 @@ std::shared_ptr<XformGraph> xform_read_graph(std::istream &is) {
   if (graph_json.contains("connections")) {
     auto connections = graph_json.at("connections");
     for (auto con_j: connections) {
-      std::string fx = con_j.at("from_xform");
-      std::string fp = con_j.at("from_port");
-      std::string tx = con_j.at("to_xform");
-      std::string tp = con_j.at("to_port");
-      if (!graph->add_connection(fx, fp, tx, tp)) {
-        spdlog::error("load_graph() couldn't add connection from {}::{} to {}::{}", fx, fp, tx, tp);
-        return nullptr;
-      }
+      auto out = XformOutputPort{con_j.at("from_xform"), con_j.at("from_port")};
+      auto in = XformInputPort{con_j.at("to_xform"), con_j.at("to_port")};
+      graph->connect(out, in);
     }
   }
   return graph;

@@ -26,9 +26,7 @@
 
 class MergeChannelXform : public RenderXform {
 public:
-  explicit MergeChannelXform(const std::string &name);
-
-  MergeChannelXform();
+  explicit MergeChannelXform(const std::string &name = "MergeChannels");
 
   ~MergeChannelXform() override;
 
@@ -45,7 +43,6 @@ public:
 
 
 private:
-  static uint32_t next_idx_;
   GLuint texture_id_;
 
   void configure_framebuffer() override;

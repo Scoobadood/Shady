@@ -1,6 +1,7 @@
 #include "xform-io.h"
 #include "xform-texture-meta.h"
 #include "xform-factory.h"
+#include "xform-exceptions.h"
 
 #include "ui_state.h"
 #include "ui_theme.h"
@@ -62,11 +63,18 @@ int main(int argc, const char *argv[]) {
   state.graph = nullptr;
   bool open_graph_menu_open = false;
   if (argc == 2) {
-    state.graph = load_graph(argv[1]);
-    if( state.graph != nullptr) {
-      state.graph_file_name = argv[1];
-      state.graph->evaluate();
+    try {
+      state.graph = load_graph(argv[1]);
+      if (state.graph != nullptr) {
+        state.graph_file_name = argv[1];
+        state.graph->evaluate();
+      }
+    } catch (XformGraphException &e) {
+      spdlog::error("Failed to load graph from :{}. Cause: {}",
+                    argv[1],
+                    e.what());
     }
+
   }
 
   auto theme = Theme::theme();
@@ -95,9 +103,10 @@ int main(int argc, const char *argv[]) {
     do_menus(open_graph_menu_open, state);
 
     if (ImGui::BeginPopupContextVoid("Add")) {
-      for (auto &xform_name: XformFactory::registered_types()) {
-        if (ImGui::Selectable(xform_name.c_str())) {
-          auto xf = XformFactory::make_xform(xform_name);
+      for (auto &xform_type_name: XformFactory::registered_types()) {
+        if (ImGui::Selectable(xform_type_name.c_str())) {
+          auto next_free_name = state.graph->next_free_name_like(xform_type_name);
+          auto xf = XformFactory::make_xform(xform_type_name, next_free_name,{});
           state.graph->add_xform(xf);
         }
       }

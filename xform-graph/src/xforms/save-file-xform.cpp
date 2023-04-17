@@ -5,8 +5,6 @@
 #include "xform-texture-meta.h"
 #include "image_io.h"
 
-uint32_t SaveFileXform::next_idx_ = 0;
-
 std::string SaveFileXform::type() const {
   return TYPE;
 }
@@ -32,9 +30,6 @@ SaveFileXform::SaveFileXform(std::string name) //
 void SaveFileXform::init() {
   is_init_ = true;
 }
-
-SaveFileXform::SaveFileXform() :
-        SaveFileXform(fmt::format("{}_{}", TYPE, next_idx_++)) {}
 
 SaveFileXform::~SaveFileXform() = default;
 

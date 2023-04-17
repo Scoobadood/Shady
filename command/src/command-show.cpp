@@ -71,8 +71,8 @@ int32_t Show::execute(Context &context) {
       ss << "  " << ipd->name() << "(" << ipd->data_type() << ") "
          << (ipd->is_required() ? "Req" : "   ");
 
-      auto to = graph->connection_to(x->name(), ipd->name());
-      if (to) ss << ", connected from " << to->first << ":" << to->second;
+      auto to = graph->connection_to({x->name(), ipd->name()});
+      if (to) ss << ", connected from " << to->xform_name << ":" << to->port_name;
       ss << endl;
     }
     ss << endl;
@@ -82,8 +82,8 @@ int32_t Show::execute(Context &context) {
     for (const auto &opd: x->output_port_descriptors()) {
       ss << "  " << opd->name() << "(" << opd->data_type() << ") ";
 
-      auto from = graph->connection_from(x->name(), opd->name());
-      if (from) ss << ", connected to " << from->first << ":" << from->second;
+      auto from = graph->connection_from({x->name(), opd->name()});
+      if (from) ss << ", connected to " << from->xform_name << ":" << from->port_name;
       ss << endl;
     }
 

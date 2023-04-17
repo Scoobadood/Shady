@@ -4,6 +4,7 @@
 #include "ui_theme.h"
 #include "ui_xform_config.h"
 
+#include "xform-exceptions.h"
 #include "xform-texture-meta.h"
 #include "imgui_internal.h"
 
@@ -117,19 +118,19 @@ void render_port_connector(int id, bool is_input,
         if (connect_compatible) {
           // Do the connection.
           if (is_input) {
-            state.graph->add_connection(
-                    state.connecting_xform->name(),
-                    state.connecting_output->name(),
-                    context.xform->name(),
-                    context.input_port->name()
+            state.graph->connect(
+                    {state.connecting_xform->name(),
+                     state.connecting_output->name()},
+                    {context.xform->name(),
+                     context.input_port->name()}
             );
             state.graph->evaluate();
           } else {
-            state.graph->add_connection(
-                    context.xform->name(),
-                    context.output_port->name(),
-                    state.connecting_xform->name(),
-                    state.connecting_input->name()
+            state.graph->connect(
+                    {context.xform->name(),
+                     context.output_port->name()},
+                    {state.connecting_xform->name(),
+                     state.connecting_input->name()}
             );
             state.graph->evaluate();
           }
@@ -148,19 +149,21 @@ void render_port_connector(int id, bool is_input,
         ImGui::OpenPopup("#delete_menu", ImGuiPopupFlags_MouseButtonRight);
       }
     }
-    if (ImGui::BeginPopup("delete_menu", 0) ){
+    if (ImGui::BeginPopup("#delete_menu", 0)) {
       if (ImGui::Selectable("Delete")) {
-        if( is_input) {
-          // Delete connection from other output
-          state.graph->remove_connection(context.xform->name(),
-                                         context.input_port->name());
-
+        if (is_input) {
+          try {
+            state.graph->disconnect({context.xform->name(),
+                                     context.input_port->name()});
+          } catch (XformGraphException &e) {
+            spdlog::error(e.what());
+          }
         } else {
           // Delete connection to output
           // TODO: Handle multiple connections
           // Delete connection from other output
-          auto to = state.graph->connection_from(context.xform->name(), context.output_port->name());
-          state.graph->remove_connection(to->first, to->second);
+          auto to = state.graph->connection_from({context.xform->name(), context.output_port->name()});
+          state.graph->disconnect({to->xform_name, to->port_name});
         }
 
       }
@@ -252,7 +255,7 @@ bool render_output_port(int opd_idx,
  */
 void render_input_ports(const std::shared_ptr<const Xform> &xform,
                         const std::vector<bool> &is_connected,
-                        std::map<std::pair<std::string, std::string>, ImVec2> &in_port_coords,
+                        std::map<XformInputPort, ImVec2> &in_port_coords,
                         State &state) {
 
 
@@ -270,8 +273,7 @@ void render_input_ports(const std::shared_ptr<const Xform> &xform,
       const bool is_port_connected = is_connected.at(ipd_idx);
 
       render_input_port(ipd_idx, is_port_connected, context, state);
-      in_port_coords.emplace(std::make_pair(context.xform->name(),
-                                            context.input_port->name()),
+      in_port_coords.emplace(XformInputPort{context.xform->name(), context.input_port->name()},
                              context.port_pos);
     }
   }
@@ -284,7 +286,7 @@ void render_input_ports(const std::shared_ptr<const Xform> &xform,
  */
 void render_output_ports(const std::shared_ptr<const Xform> &xform,
                          const std::vector<bool> &is_connected,
-                         std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords,
+                         std::map<XformOutputPort, ImVec2> &out_port_coords,
                          State &state) {
 
   auto port_descriptors = xform->output_port_descriptors();
@@ -308,7 +310,8 @@ void render_output_ports(const std::shared_ptr<const Xform> &xform,
       if (render_output_port(opd_idx, is_selected, is_port_connected, context, state)) {
         current_selection = opd_idx;
       }
-      out_port_coords.emplace(std::make_pair(xform->name(), context.output_port->name()), context.port_pos);
+      out_port_coords.emplace(XformOutputPort{xform->name(), context.output_port->name()},
+                              context.port_pos);
     }
   }
   ImGui::EndChild();
@@ -320,8 +323,8 @@ void render_output_ports(const std::shared_ptr<const Xform> &xform,
  */
 void render_ports(const std::shared_ptr<XformGraph> &graph,
                   const std::shared_ptr<const Xform> &xform,
-                  std::map<std::pair<std::string, std::string>, ImVec2> &in_port_coords,
-                  std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords,
+                  std::map<XformInputPort, ImVec2> &in_port_coords,
+                  std::map<XformOutputPort, ImVec2> &out_port_coords,
                   State &state
 ) {
   auto num_input_ports = xform->input_port_descriptors().size();
@@ -337,7 +340,7 @@ void render_ports(const std::shared_ptr<XformGraph> &graph,
   inputs_connected.reserve(num_input_ports);
   for (auto ip_idx = 0; ip_idx < num_input_ports; ++ip_idx) {
     auto ipd = xform->input_port_descriptors().at(ip_idx);
-    inputs_connected.push_back(graph->input_is_connected(xform->name(), ipd->name()));
+    inputs_connected.push_back(graph->is_connected(XformInputPort{xform->name(), ipd->name()}));
   }
   render_input_ports(xform, inputs_connected, in_port_coords, state);
 
@@ -347,7 +350,7 @@ void render_ports(const std::shared_ptr<XformGraph> &graph,
   outputs_connected.reserve(num_output_ports);
   for (auto op_idx = 0; op_idx < num_output_ports; ++op_idx) {
     auto opd = xform->output_port_descriptors().at(op_idx);
-    outputs_connected.push_back(graph->output_is_connected(xform->name(), opd->name()));
+    outputs_connected.push_back(graph->is_connected(XformOutputPort{xform->name(), opd->name()}));
   }
 
   render_output_ports(xform, outputs_connected, out_port_coords, state);
@@ -366,7 +369,7 @@ void maybe_render_output_vignette(const std::shared_ptr<const Xform> &xform,
   if (ImGui::CollapsingHeader("Image", ImGuiTreeNodeFlags_None)) {
     auto selected_output_idx = state.selected_output[xform->name()];
     auto selected_opd = xform->output_port_descriptors().at(selected_output_idx);
-    auto output = state.graph->output_from(xform->name(), selected_opd->name());
+    auto output = state.graph->result_at({xform->name(), selected_opd->name()});
     if (output) {
       auto tx = (TextureMetadata *) output.get();
       auto aspect = (float) tx->height / (float) tx->width;
@@ -402,8 +405,8 @@ ImVec4 border_colour_for_state(XformState s) {
  */
 void render_xform(const std::shared_ptr<XformGraph> &graph,
                   const std::shared_ptr<const Xform> &xform,
-                  std::map<std::pair<std::string, std::string>, ImVec2> &in_port_coords,
-                  std::map<std::pair<std::string, std::string>, ImVec2> &out_port_coords,
+                  std::map<XformInputPort, ImVec2> &in_port_coords,
+                  std::map<XformOutputPort, ImVec2> &out_port_coords,
                   State &state,
                   const std::shared_ptr<Theme> &theme
 ) {
@@ -465,8 +468,8 @@ void render_graph(State &state, const std::shared_ptr<Theme> &theme) {
    * These maps get populated as nodes are drawn and then connections
    * are drawn separately.
    */
-  map<pair<string, string>, ImVec2> in_port_coords;
-  map<pair<string, string>, ImVec2> out_port_coords;
+  map<XformInputPort, ImVec2> in_port_coords;
+  map<XformOutputPort, ImVec2> out_port_coords;
 
   /* For each xform in the graph, make a node
    */

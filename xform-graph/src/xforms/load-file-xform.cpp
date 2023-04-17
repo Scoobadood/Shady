@@ -8,8 +8,6 @@
 
 #include <utility>
 
-uint32_t LoadFileXform::next_idx_ = 0;
-
 std::string LoadFileXform::type() const {
   return TYPE;
 }
@@ -32,11 +30,6 @@ void LoadFileXform::init() {
   allocate_textures(1, &image_tx_);
   is_init_ = true;
 }
-
-
-LoadFileXform::LoadFileXform()
-        : LoadFileXform(fmt::format("{}_{}", TYPE, next_idx_++)) {}
-
 
 LoadFileXform::~LoadFileXform() {
   glDeleteTextures(1, &image_tx_);

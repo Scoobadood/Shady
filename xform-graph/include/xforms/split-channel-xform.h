@@ -27,9 +27,7 @@
 
 class SplitChannelXform : public RenderXform {
 public:
-  explicit SplitChannelXform(const std::string &name);
-
-  SplitChannelXform();
+  explicit SplitChannelXform(const std::string &name = "SplitChannels");
 
   ~SplitChannelXform() override;
 
@@ -46,7 +44,6 @@ public:
 
 
 private:
-  static uint32_t next_idx_;
   GLuint texture_ids_[4]; // R G B A
 
   void configure_framebuffer() override;

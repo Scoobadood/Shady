@@ -2,6 +2,7 @@
 #include "xform-graph.h"
 
 #include "spdlog/spdlog-inl.h"
+#include "xform-exceptions.h"
 
 Disconnect::Disconnect(const std::vector<std::string> &args) //
         : CommandWithArgs(args) //
@@ -25,15 +26,18 @@ int32_t Disconnect::execute(Context &context) {
   if (!to_pd) return error_port_not_found("input", to_xform_, to_port_);
 
 
-  auto from =graph->connection_to(to_xform_, to_port_);
-  if( !from) {
+  auto from = graph->connection_to({to_xform_, to_port_});
+  if (!from) {
     set_output(fmt::format("{}:{} is not connected",
                            to_xform_, to_port_));
     return CMD_PORTS_NOT_CONNECTED;
   }
 
-  if (graph->remove_connection(to_xform_, to_port_)) {
+  try {
+    graph->disconnect({to_xform_, to_port_});
     return error_no_error();
+  } catch (XformGraphException &e) {
+    spdlog::error(e.what());
+    return error_general_failure(e.user_error_message());
   }
-  return error_general_failure();
 }

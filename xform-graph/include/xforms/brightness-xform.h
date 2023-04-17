@@ -10,9 +10,7 @@
 
 class BrightnessXform : public SingleIOShaderXform {
 public:
-  BrightnessXform();
-
-  explicit BrightnessXform(const std::string &name);
+  explicit BrightnessXform(const std::string &name = "Brightness");
 
   ~BrightnessXform() override;
 
@@ -28,8 +26,6 @@ public:
   };
 
 private:
-  static uint32_t next_idx_;
-
   void init_shader() override;
 
   void bind_shader_variables() override;

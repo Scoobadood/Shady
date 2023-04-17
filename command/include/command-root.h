@@ -17,6 +17,7 @@ const int32_t CMD_PORTS_ALREADY_CONNECTED = 6;
 const int32_t CMD_SYNTAX_ERROR = 7;
 const int32_t CMD_NO_PROPERTY = 8;
 const int32_t CMD_UNKNOWN_XFORM_TYPE = 9;
+const int32_t CMD_XFORM_EXISTS = 10;
 
 using Context = std::map<std::string, std::shared_ptr<void>>;
 
@@ -58,11 +59,14 @@ protected:
   int32_t error_no_property(const std::string &xform,
                             const std::string &config);
 
-  int32_t error_no_such_xform(const std:: string& xform_type_);
+  int32_t error_no_such_xform(const std::string &xform_type_);
+
+  int32_t error_xform_exists(const std::string &xform_name);
+
 
   int32_t error_no_error();
 
-  int32_t error_general_failure();
+  int32_t error_general_failure(const std::string &context = "");
 
   static std::shared_ptr<XformGraph> get_graph(const Context &context);
 

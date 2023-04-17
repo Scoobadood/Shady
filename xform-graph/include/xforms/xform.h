@@ -30,6 +30,7 @@ const uint32_t XFORM_FILE_SAVE_FAILED = 6;
 const uint32_t XFORM_NOT_INITED = 7;
 const uint32_t XFORM_NULL_INPUT  = 8;
 const uint32_t XFORM_MISMATCHED_SIZE = 9;
+const uint32_t XFORM_ALREADY_EXISTS = 10;
 
 class Xform {
 public:

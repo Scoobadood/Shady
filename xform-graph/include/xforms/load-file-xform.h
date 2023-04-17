@@ -6,9 +6,7 @@
 
 class LoadFileXform : public Xform {
 public:
-  LoadFileXform();
-
-  explicit LoadFileXform(const std::string &name);
+  explicit LoadFileXform(const std::string &name = "LoadFile");
 
   ~LoadFileXform() override;
 
@@ -27,8 +25,6 @@ public:
   }
 
 private:
-  static uint32_t next_idx_;
-
   std::map<std::string, std::shared_ptr<void>>
   do_apply(const std::map<std::string, std::shared_ptr<void>> &inputs,
            uint32_t &err, std::string
