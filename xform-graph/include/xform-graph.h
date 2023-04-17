@@ -33,8 +33,8 @@ enum XformState {
 };
 
 struct Port {
-  const std::string xform_name;
-  const std::string port_name;
+  std::string xform_name;
+  std::string port_name;
 protected:
   Port(std::string xform_name, std::string port_name)//
           : xform_name{std::move(xform_name)} //
@@ -46,7 +46,6 @@ struct XformInputPort : public Port {
   XformInputPort(const std::string &xform_name, const std::string &port_name)//
           : Port{xform_name, port_name}//
   {}
-
   friend bool operator<(const XformInputPort &lhs, const XformInputPort &rhs) {
     if (lhs.xform_name < rhs.xform_name) return true;
     if (lhs.xform_name > rhs.xform_name) return false;
@@ -191,8 +190,8 @@ private:
   std::map<XformOutputPort, std::shared_ptr<void>> results_;
   std::map<std::string, std::shared_ptr<Xform>> xforms_by_name_;
 
-  std::map<std::pair<std::string, std::string>, std::pair<std::string, std::string>> connections_from_;
-  std::map<std::pair<std::string, std::string>, std::pair<std::string, std::string>> connections_to_;
+  std::map<XformOutputPort, XformInputPort> connections_from_;
+  std::map<XformInputPort, XformOutputPort> connections_to_;
   std::map<std::string, XformState> states_;
   std::map<std::string, uintmax_t> evaluation_times_;
 };
