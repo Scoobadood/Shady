@@ -54,7 +54,7 @@ std::shared_ptr<void> XformGraph::result_at(const XformOutputPort &port) const {
   if (it != results_.end())
     return it->second;
 
-  spdlog::warn("No result for {}::{}", port.xform_name, port.port_name);
+  spdlog::debug("No result for {}::{}", port.xform_name, port.port_name);
   return nullptr;
 }
 
@@ -168,15 +168,15 @@ XformGraph::input_pd_or_throw(const XformInputPort &port) const {
  * @param input
  */
 void XformGraph::disconnect_internal(const XformOutputPort output,
-                         const XformInputPort input) {
+                                     const XformInputPort input) {
   auto input_it = connections_to_.find(input);
-  if( input_it != connections_to_.end() && input_it->second == output) {
+  if (input_it != connections_to_.end() && input_it->second == output) {
     connections_to_.erase(input_it);
   }
 
   auto output_it_range = connections_from_.equal_range(output);
-  for( auto output_it = output_it_range.first; output_it != output_it_range.second; ) {
-    if( output_it->second == input) {
+  for (auto output_it = output_it_range.first; output_it != output_it_range.second;) {
+    if (output_it->second == input) {
       output_it = connections_from_.erase(output_it);
     } else {
       ++output_it;
@@ -221,7 +221,7 @@ void XformGraph::connect(const XformOutputPort &from,
   }
 
   connections_from_.emplace(from, to);
-  connections_to_.emplace(to,from);
+  connections_to_.emplace(to, from);
 
   update_dependency_order();
   for (const auto &xf: ordered_xforms_) {
@@ -324,7 +324,12 @@ bool XformGraph::evaluate() {
     for (const auto &ipd: xf->input_port_descriptors()) {
       auto iter = connections_to_.find({xf->name(), ipd->name()});
       if (iter == connections_to_.end()) continue;
-      inputs.emplace(ipd->name(), results_.at(iter->second));
+
+      auto res_iter = results_.find(iter->second);
+      if (res_iter == results_.end()) {
+
+      }
+      inputs.emplace(ipd->name(), res_iter->second);
     }
 
     uint32_t err;
